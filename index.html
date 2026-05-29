@@ -82,9 +82,7 @@
                 <select id="ciudad" required>
                     <option value="" disabled selected>Selecciona tu ciudad...</option>
                     <option value="Caracas">Caracas</option>
-                    <option value="Maracay">Maracay</option>
-                    <option value="Valencia">Valencia</option>
-                    <option value="Barquisimeto">Barquisimeto</option>
+                    <option value="Maracay">Los Teques</option>
                 </select>
             </div>
 
@@ -99,38 +97,34 @@
     <script>
         // 1. CONFIGURACIÓN: Reemplaza con tus mismos datos reales de Supabase
         const SUPABASE_URL = "https://lkqixjlbbibnlufgldaw.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrcWl4amxiYmlibmx1ZmdsZGF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNjIzOTYsImV4cCI6MjA5NTYzODM5Nn0.mhZ1gGWozhSETPINmS0cyUCrDV4LcmUMPzDTDWq6bcI"; // Tu clave anon public
-// ⚡ LÓGICA DE ESCANEO AUTOMÁTICO DESDE EL TELÉFONO
-window.addEventListener('DOMContentLoaded', () => {
-    // 1. Analizamos la URL de la barra de direcciones
-    const parametrosUrl = new URLSearchParams(window.location.search);
-    // 2. Buscamos si existe el parámetro "?codigo="
-    const codigoDetectado = parametrosUrl.get('codigo');
-    
-    // 3. Si el QR envió un código, lo metemos en el formulario
-    if (codigoDetectado) {
-        const campoCodigo = document.getElementById('codigo');
-        campoCodigo.value = codigoDetectado.trim();
-        console.log("🍗 Código QR del empaque detectado con éxito: " + codigoDetectado);
-    }
-});
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrcWl4amxiYmlibmx1ZmdsZGF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNjIzOTYsImV4cCI6MjA5NTYzODM5Nn0.mhZ1gGWozhSETPINmS0cyUCrDV4LcmUMPzDTDWq6bcI"; 
+
+        // ⚡ LÓGICA DE ESCANEO AUTOMÁTICO DESDE EL TELÉFONO
+        window.addEventListener('DOMContentLoaded', () => {
+            const parametrosUrl = new URLSearchParams(window.location.search);
+            const codigoDetectado = parametrosUrl.get('codigo');
+            
+            if (codigoDetectado) {
+                const campoCodigo = document.getElementById('codigo');
+                campoCodigo.value = codigoDetectado.trim();
+                console.log("🍗 Código QR del empaque detectado con éxito: " + codigoDetectado);
+            }
+        });
+
         // Inicializamos Supabase en la página web
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // Capturamos el formulario desde la pantalla
         document.getElementById('formulario-promo').addEventListener('submit', async (e) => {
-            e.preventDefault(); // Evita que la página se recargue sola
+            e.preventDefault(); 
             
-            // Apagamos el botón temporalmente para que no le den clic mil veces
             const boton = document.getElementById('btn-registrar');
             boton.disabled = true;
             boton.innerText = "Procesando registro...";
 
-            // Ocultamos alertas previas
             document.getElementById('alerta-error').style.display = 'none';
             document.getElementById('alerta-exito').style.display = 'none';
 
-            // Recogemos los datos introducidos por el usuario
             const codigo = document.getElementById('codigo').value.trim();
             const nombre = document.getElementById('nombre').value.trim();
             const cedula = document.getElementById('cedula').value.trim();
@@ -168,6 +162,31 @@ window.addEventListener('DOMContentLoaded', () => {
 
                 if (insertError) throw new Error("No se pudieron guardar tus datos. Inténtalo de nuevo.");
 
+                // 🔥 AQUÍ AGREGAMOS EL DISPARADOR DE CORREO DE CONFIRMACIÓN (RESEND)
+                try {
+                    await fetch('https://api.resend.com/emails', {
+                        method: 'POST',
+                        headers: {
+                            // Cambia esto por tu API Key real de Resend que empieza por re_
+                            'Authorization': 'Bearer re_TwJq8x84_6sNhn3FQkmkGr5W4vto1ja6V', 
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            from: 'Pollo Premium 5.8 <onboarding@resend.dev>',
+                            to: [correo],
+                            subject: '¡Confirmado! Ya estás participando en la gran promo de los pollos 🍗',
+                            html: `<h2>¡Hola, ${nombre}! 👋</h2>
+                                   <p>Te confirmamos que hemos recibido con éxito tu registro para el gran sorteo de <b>Industrias Pollo Premium 5.8, C.A.</b></p>
+                                   <p><b>Tu código QR registrado es:</b> <span style="color: #d32f2f; font-weight: bold; font-size: 1.2rem;">${codigo}</span></p>
+                                   <p>Recuerda que la selección de los 400 ganadores semanales se realizará de forma estrictamente <b>manual por nuestro equipo de marketing los días viernes</b>.</p>
+                                   <p>¡Te deseamos el mayor de los éxitos! 🤞🍗</p>`
+                        })
+                    });
+                    console.log("📧 Correo electrónico enviado satisfactoriamente.");
+                } catch (errorEmail) {
+                    console.error("Error al disparar el correo:", errorEmail);
+                }
+
                 // PASO 3: "Quemar" el código cambiándolo a 'Usado'
                 await _supabase
                     .from('codigos_qr')
@@ -177,14 +196,12 @@ window.addEventListener('DOMContentLoaded', () => {
                 // MUESTRA DE ÉXITO VISUAL
                 document.getElementById('alerta-exito').innerText = `¡Ya casi eres ganador, ${nombre}! Tu registro fue exitoso para el sorteo del viernes.`;
                 document.getElementById('alerta-exito').style.display = 'block';
-                document.getElementById('formulario-promo').reset(); // Limpia los campos
+                document.getElementById('formulario-promo').reset(); 
 
             } catch (err) {
-                // MUESTRA DE ERROR VISUAL
                 document.getElementById('alerta-error').innerText = err.message;
                 document.getElementById('alerta-error').style.display = 'block';
             } finally {
-                // Reactivamos el botón por si hay un error y quieren reintentar
                 boton.disabled = false;
                 boton.innerText = "¡REGISTRARME EN LA PROMO! 🤞";
             }
