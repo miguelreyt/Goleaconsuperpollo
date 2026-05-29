@@ -82,7 +82,10 @@
                 <select id="ciudad" required>
                     <option value="" disabled selected>Selecciona tu ciudad...</option>
                     <option value="Caracas">Caracas</option>
-                    <option value="Maracay">Los Teques</option>
+                    <option value="Los Teques">Los Teques</option>
+                    <option value="Maracay">Maracay</option>
+                    <option value="Valencia">Valencia</option>
+                    <option value="Barquisimeto">Barquisimeto</option>
                 </select>
             </div>
 
@@ -95,7 +98,7 @@
     </div>
 
     <script>
-        // 1. CONFIGURACIÓN: Reemplaza con tus mismos datos reales de Supabase
+        // 1. CONFIGURACIÓN: Datos de Supabase
         const SUPABASE_URL = "https://lkqixjlbbibnlufgldaw.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrcWl4amxiYmlibmx1ZmdsZGF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNjIzOTYsImV4cCI6MjA5NTYzODM5Nn0.mhZ1gGWozhSETPINmS0cyUCrDV4LcmUMPzDTDWq6bcI"; 
 
@@ -132,13 +135,21 @@
             const correo = document.getElementById('correo').value.trim();
             const ciudad = document.getElementById('ciudad').value;
 
+            if (!codigo) {
+                document.getElementById('alerta-error').innerText = "Error: No se ha detectado ningún código QR válido.";
+                document.getElementById('alerta-error').style.display = 'block';
+                boton.disabled = false;
+                boton.innerText = "¡REGISTRARME EN LA PROMO! 🤞";
+                return;
+            }
+
             try {
-                // PASO 1: Verificar si el código existe y cuál es su estado
+                // PASO 1: Verificar el estado del código QR usando maybeSingle para mitigar errores 406
                 const { data: qrData, error: qrError } = await _supabase
                     .from('codigos_qr')
                     .select('*')
                     .eq('token_qr', codigo)
-                    .single();
+                    .maybeSingle();
 
                 if (qrError || !qrData) {
                     throw new Error("El código introducido no es válido o no pertenece a la promoción.");
@@ -160,26 +171,28 @@
                         token_qr_usado: codigo 
                     }]);
 
-                if (insertError) throw new Error("No se pudieron guardar tus datos. Inténtalo de nuevo.");
+                if (insertError) {
+                    console.error("Detalle técnico de la inserción:", insertError);
+                    throw new Error("No se pudieron guardar tus datos en el sistema. Inténtalo de nuevo.");
+                }
 
-                // 🔥 AQUÍ AGREGAMOS EL DISPARADOR DE CORREO DE CONFIRMACIÓN (RESEND)
-// 🔥 LLAMADA SEGURA A LA EDGE FUNCTION DE SUPABASE
-try {
-    await fetch('https://lkqixjlbbibnlufgldaw.supabase.co/functions/v1/super-endpoint', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            nombre: nombre,
-            correo: correo,
-            codigo: codigo
-        })
-    });
-    console.log("📧 Solicitud de correo procesada por la Edge Function de Supabase.");
-} catch (errorEmail) {
-    console.error("Error al conectar con la Edge Function:", errorEmail);
-}
+                // 🔥 PASO EXTRA: Notificación por correo vía Edge Function de Supabase
+                try {
+                    await fetch('https://lkqixjlbbibnlufgldaw.supabase.co/functions/v1/super-endpoint', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            nombre: nombre,
+                            correo: correo,
+                            codigo: codigo
+                        })
+                    });
+                    console.log("📧 Solicitud de correo enviada a la Edge Function.");
+                } catch (errorEmail) {
+                    console.error("Error al disparar el flujo del correo electrónico:", errorEmail);
+                }
 
                 // PASO 3: "Quemar" el código cambiándolo a 'Usado'
                 await _supabase
