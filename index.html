@@ -193,6 +193,9 @@
                     console.log("📧 ¡Correo electrónico de confirmación enviado con éxito vía EmailJS!");
                 } catch (errorEmail) {
                     console.error("Error al disparar el flujo de EmailJS:", errorEmail);
+                    // 🚨 ESTO MOSTRARÁ EL ERROR REAL EN LA PANTALLA
+    document.getElementById('alerta-error').innerText = `Tus datos se guardaron, pero el correo falló: ${JSON.stringify(errorEmail)}`;
+    document.getElementById('alerta-error').style.display = 'block';
                 }
 
                 // PASO 3: "Quemar" el código cambiándolo a 'Usado'
