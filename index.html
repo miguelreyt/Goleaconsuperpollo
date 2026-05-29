@@ -6,6 +6,7 @@
     <title>Promo - Industrias Pollo Premium 5.8, C.A.</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
@@ -102,6 +103,9 @@
         const SUPABASE_URL = "https://lkqixjlbbibnlufgldaw.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrcWl4amxiYmlibmx1ZmdsZGF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNjIzOTYsImV4cCI6MjA5NTYzODM5Nn0.mhZ1gGWozhSETPINmS0cyUCrDV4LcmUMPzDTDWq6bcI"; 
 
+        // 2. CONFIGURACIÓN: Inicialización de EmailJS con tu Public Key
+        emailjs.init({ publicKey: "MB9bTpr-0mvKHJKI_" });
+
         // ⚡ LÓGICA DE ESCANEO AUTOMÁTICO DESDE EL TELÉFONO
         window.addEventListener('DOMContentLoaded', () => {
             const parametrosUrl = new URLSearchParams(window.location.search);
@@ -176,22 +180,19 @@
                     throw new Error("No se pudieron guardar tus datos en el sistema. Inténtalo de nuevo.");
                 }
 
-                // 🔥 PASO EXTRA: Notificación por correo vía Edge Function de Supabase
+                // 🔥 PASO EXTRA: Envío del correo al cliente de forma segura vía EmailJS 
                 try {
-                    await fetch('https://lkqixjlbbibnlufgldaw.supabase.co/functions/v1/super-endpoint', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            nombre: nombre,
-                            correo: correo,
-                            codigo: codigo
-                        })
+                    await emailjs.send("service_7i0v0tc", "template_9basvpd", {
+                        nombre: nombre,
+                        correo: correo,
+                        codigo: codigo,
+                        cedula: cedula,
+                        telefono: telefono,
+                        ciudad: ciudad
                     });
-                    console.log("📧 Solicitud de correo enviada a la Edge Function.");
+                    console.log("📧 ¡Correo electrónico de confirmación enviado con éxito vía EmailJS!");
                 } catch (errorEmail) {
-                    console.error("Error al disparar el flujo del correo electrónico:", errorEmail);
+                    console.error("Error al disparar el flujo de EmailJS:", errorEmail);
                 }
 
                 // PASO 3: "Quemar" el código cambiándolo a 'Usado'
@@ -201,7 +202,7 @@
                     .eq('token_qr', codigo);
 
                 // MUESTRA DE ÉXITO VISUAL
-                document.getElementById('alerta-exito').innerText = `¡Ya casi eres ganador, ${nombre}! Tu registro fue exitoso para el sorteo del viernes.`;
+                document.getElementById('alerta-exito').innerText = `¡Ya casi eres ganador, ${nombre}! Tu registro fue exitoso. Revisa tu correo de confirmación.`;
                 document.getElementById('alerta-exito').style.display = 'block';
                 document.getElementById('formulario-promo').reset(); 
 
