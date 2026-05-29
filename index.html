@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promo - Industrias Pollo Premium 5.8, C.A.</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #f7f9fa; color: #333; display: flex; justify-content: center; padding: 20px 10px; }
+        .contenedor-movil { width: 100%; max-width: 450px; background: #ffffff; border-radius: 15px; box-shadow: 0px 4px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #e1e8ed; }
+        .header { text-align: center; padding: 20px; background-color: #ffffff; border-bottom: 2px solid #f0f3f5; }
+        .logo-simulado { font-weight: 800; font-size: 1.3rem; color: #d32f2f; text-transform: uppercase; }
+        .logo-sub { font-size: 0.8rem; color: #777; display: block; }
+        .banner { background: linear-gradient(135deg, #ff9800, #d32f2f); color: #ffffff; padding: 30px 20px; text-align: center; }
+        .banner h1 { font-size: 1.6rem; margin-bottom: 10px; }
+        form { padding: 25px 20px; }
+        .grupo-campo { margin-bottom: 20px; }
+        label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: #4a5568; }
+        input, select { width: 100%; padding: 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; background-color: #f8fafc; }
+        input:focus, select:focus { outline: none; border-color: #ff9800; background-color: #ffffff; }
+        .texto-ayuda { font-size: 0.75rem; color: #64748b; margin-top: 4px; display: block; }
+        .campo-qr { background-color: #edf2f7; font-weight: bold; color: #2d3748; }
+        .boton-enviar { width: 100%; background: #d32f2f; color: white; border: none; padding: 15px; font-size: 1.1rem; font-weight: 700; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+        .boton-enviar:disabled { background: #cbd5e1; cursor: not-allowed; }
+        .footer { text-align: center; padding: 20px; font-size: 0.75rem; color: #94a3b8; background-color: #f8fafc; border-top: 1px solid #e2e8f0; }
+        
+        /* Estilos para los mensajes de éxito o error */
+        .alerta { padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; font-size: 0.9rem; font-weight: 600; }
+        .alerta-exito { background-color: #e6fffa; color: #00695c; border: 1px solid #b2dfdb; }
+        .alerta-error { background-color: #fff5f5; color: #c53030; border: 1px solid #feb2b2; }
+    </style>
+</head>
+<body>
+
+    <div class="contenedor-movil">
+        <div class="header">
+            <div class="logo-simulado">Pollo Premium 5.8</div>
+            <span class="logo-sub">Industrias Pollo Premium 5.8, C.A.</span>
+        </div>
+
+        <div class="banner">
+            <h1>¡Gana 1 de los 400 Pollos Semanales! 🍗</h1>
+            <p>Registra tus datos y participa en el gran sorteo.</p>
+        </div>
+
+        <div style="padding: 20px 20px 0 20px;">
+            <div id="alerta-error" class="alerta alerta-error"></div>
+            <div id="alerta-exito" class="alerta alerta-exito"></div>
+        </div>
+
+        <form id="formulario-promo">
+            <div class="grupo-campo">
+                <label for="codigo">Código QR</label>
+                <input type="text" id="codigo" class="campo-qr" value="" readonly required>
+            </div>
+
+            <div class="grupo-campo">
+                <label for="nombre">Nombre y Apellido</label>
+                <input type="text" id="nombre" placeholder="Ej: Juan Pérez" required>
+            </div>
+
+            <div class="grupo-campo">
+                <label for="cedula">Cédula de Identidad / DNI</label>
+                <input type="text" id="cedula" placeholder="Ej: V-12345678" required>
+            </div>
+
+            <div class="grupo-campo">
+                <label for="telefono">Teléfono Celular (WhatsApp)</label>
+                <input type="tel" id="telefono" placeholder="Ej: 04141234567" required>
+            </div>
+
+            <div class="grupo-campo">
+                <label for="correo">Correo Electrónico</label>
+                <input type="email" id="correo" placeholder="Ej: juan@email.com" required>
+            </div>
+
+            <div class="grupo-campo">
+                <label for="ciudad">Ciudad de Residencia</label>
+                <select id="ciudad" required>
+                    <option value="" disabled selected>Selecciona tu ciudad...</option>
+                    <option value="Caracas">Caracas</option>
+                    <option value="Maracay">Maracay</option>
+                    <option value="Valencia">Valencia</option>
+                    <option value="Barquisimeto">Barquisimeto</option>
+                </select>
+            </div>
+
+            <button type="submit" id="btn-registrar" class="boton-enviar">¡REGISTRARME EN LA PROMO! 🤞</button>
+        </form>
+
+        <div class="footer">
+            Industrias Pollo Premium 5.8, C.A. © 2026
+        </div>
+    </div>
+
+    <script>
+        // 1. CONFIGURACIÓN: Reemplaza con tus mismos datos reales de Supabase
+        const SUPABASE_URL = "https://lkqixjlbbibnlufgldaw.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrcWl4amxiYmlibmx1ZmdsZGF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNjIzOTYsImV4cCI6MjA5NTYzODM5Nn0.mhZ1gGWozhSETPINmS0cyUCrDV4LcmUMPzDTDWq6bcI"; // Tu clave anon public
+// ⚡ LÓGICA DE ESCANEO AUTOMÁTICO DESDE EL TELÉFONO
+window.addEventListener('DOMContentLoaded', () => {
+    // 1. Analizamos la URL de la barra de direcciones
+    const parametrosUrl = new URLSearchParams(window.location.search);
+    // 2. Buscamos si existe el parámetro "?codigo="
+    const codigoDetectado = parametrosUrl.get('codigo');
+    
+    // 3. Si el QR envió un código, lo metemos en el formulario
+    if (codigoDetectado) {
+        const campoCodigo = document.getElementById('codigo');
+        campoCodigo.value = codigoDetectado.trim();
+        console.log("🍗 Código QR del empaque detectado con éxito: " + codigoDetectado);
+    }
+});
+        // Inicializamos Supabase en la página web
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Capturamos el formulario desde la pantalla
+        document.getElementById('formulario-promo').addEventListener('submit', async (e) => {
+            e.preventDefault(); // Evita que la página se recargue sola
+            
+            // Apagamos el botón temporalmente para que no le den clic mil veces
+            const boton = document.getElementById('btn-registrar');
+            boton.disabled = true;
+            boton.innerText = "Procesando registro...";
+
+            // Ocultamos alertas previas
+            document.getElementById('alerta-error').style.display = 'none';
+            document.getElementById('alerta-exito').style.display = 'none';
+
+            // Recogemos los datos introducidos por el usuario
+            const codigo = document.getElementById('codigo').value.trim();
+            const nombre = document.getElementById('nombre').value.trim();
+            const cedula = document.getElementById('cedula').value.trim();
+            const telefono = document.getElementById('telefono').value.trim();
+            const correo = document.getElementById('correo').value.trim();
+            const ciudad = document.getElementById('ciudad').value;
+
+            try {
+                // PASO 1: Verificar si el código existe y cuál es su estado
+                const { data: qrData, error: qrError } = await _supabase
+                    .from('codigos_qr')
+                    .select('*')
+                    .eq('token_qr', codigo)
+                    .single();
+
+                if (qrError || !qrData) {
+                    throw new Error("El código introducido no es válido o no pertenece a la promoción.");
+                }
+
+                if (qrData.estado === 'Usado') {
+                    throw new Error("¡Este código QR ya fue utilizado! No puedes reutilizarlo.");
+                }
+
+                // PASO 2: Insertar al nuevo participante en la tabla 'participantes'
+                const { error: insertError } = await _supabase
+                    .from('participantes')
+                    .insert([{ 
+                        nombre: nombre, 
+                        cedula: cedula, 
+                        telefono: telefono, 
+                        correo: correo, 
+                        ciudad: ciudad, 
+                        token_qr_usado: codigo 
+                    }]);
+
+                if (insertError) throw new Error("No se pudieron guardar tus datos. Inténtalo de nuevo.");
+
+                // PASO 3: "Quemar" el código cambiándolo a 'Usado'
+                await _supabase
+                    .from('codigos_qr')
+                    .update({ estado: 'Usado' })
+                    .eq('token_qr', codigo);
+
+                // MUESTRA DE ÉXITO VISUAL
+                document.getElementById('alerta-exito').innerText = `¡Ya casi eres ganador, ${nombre}! Tu registro fue exitoso para el sorteo del viernes.`;
+                document.getElementById('alerta-exito').style.display = 'block';
+                document.getElementById('formulario-promo').reset(); // Limpia los campos
+
+            } catch (err) {
+                // MUESTRA DE ERROR VISUAL
+                document.getElementById('alerta-error').innerText = err.message;
+                document.getElementById('alerta-error').style.display = 'block';
+            } finally {
+                // Reactivamos el botón por si hay un error y quieren reintentar
+                boton.disabled = false;
+                boton.innerText = "¡REGISTRARME EN LA PROMO! 🤞";
+            }
+        });
+    </script>
+</body>
+</html>
