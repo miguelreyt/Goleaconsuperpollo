@@ -163,29 +163,23 @@
                 if (insertError) throw new Error("No se pudieron guardar tus datos. Inténtalo de nuevo.");
 
                 // 🔥 AQUÍ AGREGAMOS EL DISPARADOR DE CORREO DE CONFIRMACIÓN (RESEND)
-                try {
-                    await fetch('https://api.resend.com/emails', {
-                        method: 'POST',
-                        headers: {
-                            // Cambia esto por tu API Key real de Resend que empieza por re_
-                            'Authorization': 'Bearer re_TwJq8x84_6sNhn3FQkmkGr5W4vto1ja6V', 
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            from: 'Pollo Premium 5.8 <onboarding@resend.dev>',
-                            to: [correo],
-                            subject: '¡Confirmado! Ya estás participando en la gran promo de los pollos 🍗',
-                            html: `<h2>¡Hola, ${nombre}! 👋</h2>
-                                   <p>Te confirmamos que hemos recibido con éxito tu registro para el gran sorteo de <b>Industrias Pollo Premium 5.8, C.A.</b></p>
-                                   <p><b>Tu código QR registrado es:</b> <span style="color: #d32f2f; font-weight: bold; font-size: 1.2rem;">${codigo}</span></p>
-                                   <p>Recuerda que la selección de los 400 ganadores semanales se realizará de forma estrictamente <b>manual por nuestro equipo de marketing los días viernes</b>.</p>
-                                   <p>¡Te deseamos el mayor de los éxitos! 🤞🍗</p>`
-                        })
-                    });
-                    console.log("📧 Correo electrónico enviado satisfactoriamente.");
-                } catch (errorEmail) {
-                    console.error("Error al disparar el correo:", errorEmail);
-                }
+// 🔥 LLAMADA SEGURA A LA EDGE FUNCTION DE SUPABASE
+try {
+    await fetch('https://lkqixjlbbibnlufgldaw.supabase.co/functions/v1/enviar-correo', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            nombre: nombre,
+            correo: correo,
+            codigo: codigo
+        })
+    });
+    console.log("📧 Solicitud de correo procesada por la Edge Function de Supabase.");
+} catch (errorEmail) {
+    console.error("Error al conectar con la Edge Function:", errorEmail);
+}
 
                 // PASO 3: "Quemar" el código cambiándolo a 'Usado'
                 await _supabase
