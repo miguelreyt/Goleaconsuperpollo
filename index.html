@@ -23,9 +23,13 @@
         input, select { width: 100%; padding: 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; background-color: #f8fafc; }
         input:focus, select:focus { outline: none; border-color: #ff9800; background-color: #ffffff; }
         .campo-qr { background-color: #edf2f7; font-weight: bold; color: #2d3748; }
+        .grupo-mixto { display: flex; gap: 10px; }
+        .grupo-mixto select { width: 35%; }
+        .grupo-mixto input { width: 65%; }
         .boton-enviar { width: 100%; background: #d32f2f; color: white; border: none; padding: 15px; font-size: 1.1rem; font-weight: 700; border-radius: 8px; cursor: pointer; margin-top: 10px; }
         .boton-enviar:disabled { background: #cbd5e1; cursor: not-allowed; }
         .footer { text-align: center; padding: 20px; font-size: 0.75rem; color: #94a3b8; background-color: #f8fafc; border-top: 1px solid #e2e8f0; }
+        .texto-ayuda { font-size: 0.75rem; color: #64748b; margin-top: 4px; display: block; }
         
         .alerta { padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; font-size: 0.9rem; font-weight: 600; }
         .alerta-exito { background-color: #e6fffa; color: #00695c; border: 1px solid #b2dfdb; }
@@ -57,18 +61,26 @@
             </div>
 
             <div class="grupo-campo">
-                <label for="nombre">Nombre y Apellido</label>
-                <input type="text" id="nombre" placeholder="Ej: Juan Pérez" required>
+                <label for="nombre">Nombre y Apellido / Razón Social</label>
+                <input type="text" id="nombre" placeholder="Ej: Juan Pérez o Inversiones 58 C.A." required>
             </div>
 
             <div class="grupo-campo">
-                <label for="cedula">Cédula de Identidad / DNI</label>
-                <input type="text" id="cedula" placeholder="Ej: 7337373" required>
+                <label for="documento_numero">Documento de Identidad (Cédula o RIF)</label>
+                <div class="grupo-mixto">
+                    <select id="documento_tipo" required>
+                        <option value="V" selected>V (Ven)</option>
+                        <option value="E">E (Ext)</option>
+                        <option value="J">J (RIF)</option>
+                    </select>
+                    <input type="text" id="documento_numero" placeholder="Ej: 12345678" required>
+                </div>
+                <span id="ayuda-doc" class="texto-ayuda">Cédula: Introduzca exactamente 8 dígitos numéricos.</span>
             </div>
 
             <div class="grupo-campo">
                 <label for="telefono">Teléfono Celular</label>
-                <input type="tel" id="telefono" placeholder="Ej: 04125555555" required>
+                <input type="tel" id="telefono" placeholder="Ej: 04125529653" required>
             </div>
 
             <div class="grupo-campo">
@@ -97,26 +109,33 @@
     </div>
 
     <script>
-        // 1. CONFIGURACIÓN: Datos de Supabase
         const SUPABASE_URL = "https://lkqixjlbbibnlufgldaw.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrcWl4amxiYmlibmx1ZmdsZGF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNjIzOTYsImV4cCI6MjA5NTYzODM5Nn0.mhZ1gGWozhSETPINmS0cyUCrDV4LcmUMPzDTDWq6bcI"; 
 
-        // 2. CONFIGURACIÓN: Inicialización de EmailJS
         emailjs.init({ publicKey: "MB9bTpr-0mvKHJKI_" });
 
-        // 3. CONFIGURACIÓN DE TU EMPRESA: Pon aquí el número de WhatsApp comercial de Pollo Premium
-        // Debe incluir código de país sin el signo más. Ejemplo para Venezuela: 584120000000
         const WHATSAPP_EMPRESA = "584143329200"; 
 
-        // Lógica de escaneo automático
+        // Dynamic placeholder helper for UI interaction
+        const tipoDocSelect = document.getElementById('documento_tipo');
+        const numDocInput = document.getElementById('documento_numero');
+        const ayudaDocText = document.getElementById('ayuda-doc');
+
+        tipoDocSelect.addEventListener('change', () => {
+            if (tipoDocSelect.value === 'J') {
+                numDocInput.placeholder = "Ej: 123456789";
+                ayudaDocText.innerText = "RIF: Introduzca exactamente 9 dígitos numéricos.";
+            } else {
+                numDocInput.placeholder = "Ej: 12345678";
+                ayudaDocText.innerText = "Cédula: Introduzca exactamente 8 dígitos numéricos.";
+            }
+        });
+
         window.addEventListener('DOMContentLoaded', () => {
             const parametrosUrl = new URLSearchParams(window.location.search);
             const codigoDetectado = parametrosUrl.get('codigo');
-            
             if (codigoDetectado) {
-                const campoCodigo = document.getElementById('codigo');
-                campoCodigo.value = codigoDetectado.trim();
-                console.log("🍗 Código QR del empaque detectado con éxito: " + codigoDetectado);
+                document.getElementById('codigo').value = codigoDetectado.trim();
             }
         });
 
@@ -134,20 +153,33 @@
 
             const codigo = document.getElementById('codigo').value.trim();
             const nombre = document.getElementById('nombre').value.trim();
-            const cedula = document.getElementById('cedula').value.trim();
-            const telefono = document.getElementById('telefono').value.trim();
             const correo = document.getElementById('correo').value.trim();
+            const telefono = document.getElementById('telefono').value.trim();
             const ciudad = document.getElementById('ciudad').value;
 
-            if (!codigo) {
-                document.getElementById('alerta-error').innerText = "Error: No se ha detectado ningún código QR válido.";
-                document.getElementById('alerta-error').style.display = 'block';
-                boton.disabled = false;
-                boton.innerText = "¡REGISTRARME EN LA PROMO! 🤞";
-                return;
-            }
+            // ⚡ PROCESAMIENTO Y VALIDACIÓN ESTRICTA DEL DOCUMENTO
+            const tipoDoc = tipoDocSelect.value;
+            // Limpiamos espacios o guiones accidentales que meta el usuario
+            const numeroDocLimpio = numDocInput.value.replace(/[^0-9]/g, ''); 
+
+            let cedulaFinal = `${tipoDoc}-${numeroDocLimpio}`; // Formato final: V-12345678 o J-123456789
 
             try {
+                // Validación estricta en el Frontend
+                if (tipoDoc === 'V' || tipoDoc === 'E') {
+                    if (numeroDocLimpio.length !== 8) {
+                        throw new Error("La cédula de identidad debe tener exactamente 8 números enteros.");
+                    }
+                } else if (tipoDoc === 'J') {
+                    if (numeroDocLimpio.length !== 9) {
+                        throw new Error("El RIF comercial debe tener exactamente 9 números enteros.");
+                    }
+                }
+
+                if (!codigo) {
+                    throw new Error("Error: No se ha detectado ningún código QR válido.");
+                }
+
                 // PASO 1: Verificar el estado del código QR en Supabase
                 const { data: qrData, error: qrError } = await _supabase
                     .from('codigos_qr')
@@ -155,25 +187,20 @@
                     .eq('token_qr', codigo)
                     .maybeSingle();
 
-                if (qrError || !qrData) {
-                    throw new Error("El código introducido no es válido o no pertenece a la promoción.");
-                }
+                if (qrError || !qrData) throw new Error("El código introducido no es válido.");
+                if (qrData.estado === 'Usado') throw new Error("¡Este código QR ya fue utilizado!");
 
-                if (qrData.estado === 'Usado') {
-                    throw new Error("¡Este código QR ya fue utilizado! No puedes reutilizarlo.");
-                }
-
-                // PASO 2: Insertar participante en Supabase
+                // PASO 2: Insertar participante en Supabase con su Cédula/RIF bien estructurada
                 const { error: insertError } = await _supabase
                     .from('participantes')
-                    .insert([{ nombre, cedula, telefono, correo, ciudad, token_qr_usado: codigo }]);
+                    .insert([{ nombre, cedula: cedulaFinal, telefono, correo, ciudad, token_qr_usado: codigo }]);
 
-                if (insertError) throw new Error("No se pudieron guardar tus datos en el sistema.");
+                if (insertError) throw new Error("No se pudieron guardar tus datos.");
 
                 // PASO 3: Envío del correo vía EmailJS 
                 try {
                     await emailjs.send("service_7i0v0tc", "template_gd939sf", {
-                        nombre, correo, codigo, cedula, telefono, ciudad
+                        nombre, correo, codigo, cedula: cedulaFinal, telefono, ciudad
                     });
                 } catch (errorEmail) {
                     console.error("Error en EmailJS:", errorEmail);
@@ -183,15 +210,14 @@
                 await _supabase.from('codigos_qr').update({ estado: 'Usado' }).eq('token_qr', codigo);
 
                 // MUESTRA DE ÉXITO VISUAL
-                document.getElementById('alerta-exito').innerText = `¡Registro Exitoso, ${nombre}! Abriendo tu WhatsApp para confirmar tu participación...`;
+                document.getElementById('alerta-exito').innerText = `¡Registro Exitoso, ${nombre}! Redirigiendo a tu WhatsApp para finalizar...`;
                 document.getElementById('alerta-exito').style.display = 'block';
                 document.getElementById('formulario-promo').reset(); 
 
-                // 🔥 PASO 5: Redirección Mágica a WhatsApp (100% Nativo, Seguro y Profesional)
-                const textoMensaje = `¡Hola *Industrias Pollo Premium 5.8*! 👋 Acabo de registrarme con éxito en el sorteo semanal. 🍗\n\n*Mis Datos:*\n• Nombre: ${nombre}\n• Cédula: ${cedula}\n• Código QR: *${codigo}*`;
+                // PASO 5: Redirección Mágica a WhatsApp
+                const textoMensaje = `¡Hola *Industrias Pollo Premium 5.8*! 👋 Acabo de registrarme con éxito en el sorteo semanal. 🍗\n\n*Mis Datos:*\n• Nombre: ${nombre}\n• Documento: *${cedulaFinal}*\n• Código QR: *${codigo}*`;
                 const urlWhatsapp = `https://api.whatsapp.com/send?phone=${WHATSAPP_EMPRESA}&text=${encodeURIComponent(textoMensaje)}`;
                 
-                // Abre el WhatsApp del cliente con el texto listo tras 2 segundos para que pueda ver el éxito
                 setTimeout(() => {
                     window.location.href = urlWhatsapp;
                 }, 2000);
