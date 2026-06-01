@@ -22,7 +22,6 @@
         label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: #4a5568; }
         input, select { width: 100%; padding: 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; background-color: #f8fafc; }
         input:focus, select:focus { outline: none; border-color: #ff9800; background-color: #ffffff; }
-        .texto-ayuda { font-size: 0.75rem; color: #64748b; margin-top: 4px; display: block; }
         .campo-qr { background-color: #edf2f7; font-weight: bold; color: #2d3748; }
         .boton-enviar { width: 100%; background: #d32f2f; color: white; border: none; padding: 15px; font-size: 1.1rem; font-weight: 700; border-radius: 8px; cursor: pointer; margin-top: 10px; }
         .boton-enviar:disabled { background: #cbd5e1; cursor: not-allowed; }
@@ -64,13 +63,12 @@
 
             <div class="grupo-campo">
                 <label for="cedula">Cédula de Identidad / DNI</label>
-                <input type="text" id="cedula" placeholder="Ej: V-12345678" required>
+                <input type="text" id="cedula" placeholder="Ej: 7337373" required>
             </div>
 
             <div class="grupo-campo">
-                <label for="telefono">Teléfono Celular (WhatsApp)</label>
-                <input type="tel" id="telefono" placeholder="Ej: +584125555555" required>
-                <span class="texto-ayuda">Ingresa el código de país (Ej: +58 para Venezuela).</span>
+                <label for="telefono">Teléfono Celular</label>
+                <input type="tel" id="telefono" placeholder="Ej: 04125555555" required>
             </div>
 
             <div class="grupo-campo">
@@ -106,12 +104,11 @@
         // 2. CONFIGURACIÓN: Inicialización de EmailJS
         emailjs.init({ publicKey: "MB9bTpr-0mvKHJKI_" });
 
-        // 3. CONFIGURACIÓN: Credenciales de Twilio WhatsApp
-        const TWILIO_ACCOUNT_SID = "ACde9b90663e343667831e7beb926d54a2";
-        const TWILIO_AUTH_TOKEN = "84be278291cc89e9a6fb3f22f808b3c0";
-        const TWILIO_SANDBOX_NUMBER = "+14155238886"; 
+        // 3. CONFIGURACIÓN DE TU EMPRESA: Pon aquí el número de WhatsApp comercial de Pollo Premium
+        // Debe incluir código de país sin el signo más. Ejemplo para Venezuela: 584120000000
+        const WHATSAPP_EMPRESA = "584125434237"; 
 
-        // ⚡ LÓGICA DE ESCANEO AUTOMÁTICO DESDE EL TELÉFONO
+        // Lógica de escaneo automático
         window.addEventListener('DOMContentLoaded', () => {
             const parametrosUrl = new URLSearchParams(window.location.search);
             const codigoDetectado = parametrosUrl.get('codigo');
@@ -123,10 +120,8 @@
             }
         });
 
-        // Inicializamos Supabase
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Capturamos el formulario
         document.getElementById('formulario-promo').addEventListener('submit', async (e) => {
             e.preventDefault(); 
             
@@ -140,14 +135,9 @@
             const codigo = document.getElementById('codigo').value.trim();
             const nombre = document.getElementById('nombre').value.trim();
             const cedula = document.getElementById('cedula').value.trim();
-            let telefonoInput = document.getElementById('telefono').value.trim();
+            const telefono = document.getElementById('telefono').value.trim();
             const correo = document.getElementById('correo').value.trim();
             const ciudad = document.getElementById('ciudad').value;
-
-            // Formatear número de teléfono para Twilio si el usuario omite el '+'
-            if (!telefonoInput.startsWith('+')) {
-                telefonoInput = '+' + telefonoInput;
-            }
 
             if (!codigo) {
                 document.getElementById('alerta-error').innerText = "Error: No se ha detectado ningún código QR válido.";
@@ -173,77 +163,38 @@
                     throw new Error("¡Este código QR ya fue utilizado! No puedes reutilizarlo.");
                 }
 
-                // PASO 2: Insertar al nuevo participante en la tabla 'participantes'
+                // PASO 2: Insertar participante en Supabase
                 const { error: insertError } = await _supabase
                     .from('participantes')
-                    .insert([{ 
-                        nombre: nombre, 
-                        cedula: cedula, 
-                        telefono: telefonoInput, 
-                        correo: correo, 
-                        ciudad: ciudad, 
-                        token_qr_usado: codigo 
-                    }]);
+                    .insert([{ nombre, cedula, telefono, correo, ciudad, token_qr_usado: codigo }]);
 
-                if (insertError) {
-                    console.error("Detalle técnico de la inserción:", insertError);
-                    throw new Error("No se pudieron guardar tus datos en el sistema. Inténtalo de nuevo.");
-                }
+                if (insertError) throw new Error("No se pudieron guardar tus datos en el sistema.");
 
-                // 🔥 PASO 3: Envío del correo vía EmailJS 
+                // PASO 3: Envío del correo vía EmailJS 
                 try {
                     await emailjs.send("service_7i0v0tc", "template_gd939sf", {
-                        nombre: nombre,
-                        correo: correo,
-                        codigo: codigo,
-                        cedula: cedula,
-                        telefono: telefonoInput,
-                        ciudad: ciudad
+                        nombre, correo, codigo, cedula, telefono, ciudad
                     });
-                    console.log("📧 ¡Correo electrónico enviado!");
                 } catch (errorEmail) {
                     console.error("Error en EmailJS:", errorEmail);
                 }
 
-                // 🔥 PASO 4: Envío automático de WhatsApp usando Plantilla Oficial Sandbox Twilio
-                try {
-                    const endpointTwilio = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
-                    
-                    const payload = new URLSearchParams();
-                    payload.append("From", `whatsapp:${TWILIO_SANDBOX_NUMBER}`);
-                    payload.append("To", `whatsapp:${telefonoInput}`);
-                    // Uso estructurado del formato aprobado: "Your PolloPremium5.8 code is [CODIGO_QR]"
-                    payload.append("Body", `Your PolloPremium5.8 code is ${codigo}`);
-
-                    const respuestaTwilio = await fetch(endpointTwilio, {
-                        method: "POST",
-                        headers: {
-                            "Authorization": "Basic " + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`),
-                            "Content-Type": "application/x-www-form-urlencoded"
-                        },
-                        body: payload
-                    });
-
-                    if (!respuestaTwilio.ok) {
-                        const datosError = await respuestaTwilio.json();
-                        console.error("Twilio rechazó el envío:", datosError);
-                    } else {
-                        console.log("💬 ¡WhatsApp de confirmación despachado vía Twilio Sandbox!");
-                    }
-                } catch (errorTwilio) {
-                    console.error("Error de conexión de red con la API de Twilio:", errorTwilio);
-                }
-
-                // PASO 5: "Quemar" el código cambiándolo a 'Usado'
-                await _supabase
-                    .from('codigos_qr')
-                    .update({ estado: 'Usado' })
-                    .eq('token_qr', codigo);
+                // PASO 4: "Quemar" el código cambiándolo a 'Usado'
+                await _supabase.from('codigos_qr').update({ estado: 'Usado' }).eq('token_qr', codigo);
 
                 // MUESTRA DE ÉXITO VISUAL
-                document.getElementById('alerta-exito').innerText = `¡Ya casi eres ganador, ${nombre}! Tu registro fue exitoso. Revisa tu correo y WhatsApp de confirmación.`;
+                document.getElementById('alerta-exito').innerText = `¡Registro Exitoso, ${nombre}! Abriendo tu WhatsApp para confirmar tu participación...`;
                 document.getElementById('alerta-exito').style.display = 'block';
                 document.getElementById('formulario-promo').reset(); 
+
+                // 🔥 PASO 5: Redirección Mágica a WhatsApp (100% Nativo, Seguro y Profesional)
+                const textoMensaje = `¡Hola *Industrias Pollo Premium 5.8*! 👋 Acabo de registrarme con éxito en el sorteo semanal. 🍗\n\n*Mis Datos:*\n• Nombre: ${nombre}\n• Cédula: ${cedula}\n• Código QR: *${codigo}*`;
+                const urlWhatsapp = `https://api.whatsapp.com/send?phone=${WHATSAPP_EMPRESA}&text=${encodeURIComponent(textoMensaje)}`;
+                
+                // Abre el WhatsApp del cliente con el texto listo tras 2 segundos para que pueda ver el éxito
+                setTimeout(() => {
+                    window.location.href = urlWhatsapp;
+                }, 2000);
 
             } catch (err) {
                 document.getElementById('alerta-error').innerText = err.message;
