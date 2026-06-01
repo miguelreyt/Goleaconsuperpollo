@@ -40,12 +40,12 @@
 
     <div class="contenedor-movil">
         <div class="header">
-            <div class="logo-simulado">Pollo Premium 5.8</div>
+            <div class="logo-simulado">Pollo Premium</div>
             <span class="logo-sub">Industrias Pollo Premium 5.8, C.A.</span>
         </div>
 
         <div class="banner">
-            <h1>¡Gana 1 de los 400 Pollos Semanales! 🍗</h1>
+            <h1>¡Gana 1 de los 10 Pollos Semanales! 🍗</h1>
             <p>Registra tus datos y participa en el gran sorteo.</p>
         </div>
 
@@ -69,9 +69,9 @@
                 <label for="documento_numero">Documento de Identidad (Cédula o RIF)</label>
                 <div class="grupo-mixto">
                     <select id="documento_tipo" required>
-                        <option value="V" selected>V (Ven)</option>
-                        <option value="E">E (Ext)</option>
-                        <option value="J">J (RIF)</option>
+                        <option value="V" selected>V</option>
+                        <option value="E">E</option>
+                        <option value="J">J</option>
                     </select>
                     <input type="text" id="documento_numero" placeholder="Ej: 12345678" required>
                 </div>
@@ -210,7 +210,7 @@
                 await _supabase.from('codigos_qr').update({ estado: 'Usado' }).eq('token_qr', codigo);
 
                 // MUESTRA DE ÉXITO VISUAL
-                document.getElementById('alerta-exito').innerText = `¡Registro Exitoso, ${nombre}! Redirigiendo a tu WhatsApp para finalizar...`;
+                document.getElementById('alerta-exito').innerText = `¡Registro Exitoso, ${nombre}! Mucha suerte en el sorteo, Recuerda seguirnos en nuestras redes sociales y enviarnos un mensaje a nuestro whatsapp`;
                 document.getElementById('alerta-exito').style.display = 'block';
                 document.getElementById('formulario-promo').reset(); 
 
