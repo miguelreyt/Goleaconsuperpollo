@@ -79,8 +79,19 @@
             </div>
 
             <div class="grupo-campo">
-                <label for="telefono">Teléfono Celular</label>
-                <input type="tel" id="telefono" placeholder="Ej: 04xx-xxx-xx-xx" required>
+                <label for="telefono_numero">Teléfono Celular</label>
+                <div class="grupo-mixto">
+                    <select id="telefono_operadora" required>
+                        <option value="0412" selected>0412</option>
+                        <option value="0422">0422</option>
+                        <option value="0414">0414</option>
+                        <option value="0424">0424</option>
+                        <option value="0416">0416</option>
+                        <option value="0426">0426</option>
+                    </select>
+                    <input type="tel" id="telefono_numero" placeholder="1234567" pattern="[0-9]{7}" inputmode="numeric" maxlength="7" required>
+                </div>
+                <span class="texto-ayuda">Introduzca exactamente los 7 dígitos de su número.</span>
             </div>
 
             <div class="grupo-campo">
@@ -94,7 +105,8 @@
                     <option value="" disabled selected>Selecciona tu ciudad...</option>
                     <option value="Caracas">Caracas</option>
                     <option value="Los Teques">Los Teques</option>
-                    <option value="Maracay">La Guaira</option>
+                    <option value="La Guaira">La Guaira</option>
+                    <option value="Maracay">Maracay</option>
                 </select>
             </div>
 
@@ -114,7 +126,7 @@
 
         const WHATSAPP_EMPRESA = "584143329200"; 
 
-        // Dynamic placeholder helper for UI interaction
+        // Dynamic placeholder helper para Documentos
         const tipoDocSelect = document.getElementById('documento_tipo');
         const numDocInput = document.getElementById('documento_numero');
         const ayudaDocText = document.getElementById('ayuda-doc');
@@ -127,6 +139,13 @@
                 numDocInput.placeholder = "Ej: 12345678";
                 ayudaDocText.innerText = "Cédula: Introduzca exactamente 8 dígitos numéricos.";
             }
+        });
+
+        // 🌟 Filtro estricto: Solo permitir números en el campo de cédula y teléfono mientras escriben
+        [numDocInput, document.getElementById('telefono_numero')].forEach(input => {
+            input.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            });
         });
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -152,18 +171,20 @@
             const codigo = document.getElementById('codigo').value.trim();
             const nombre = document.getElementById('nombre').value.trim();
             const correo = document.getElementById('correo').value.trim();
-            const telefono = document.getElementById('telefono').value.trim();
             const ciudad = document.getElementById('ciudad').value;
 
-            // ⚡ PROCESAMIENTO Y VALIDACIÓN ESTRICTA DEL DOCUMENTO
+            // ⚡ PROCESAMIENTO Y VALIDACIÓN DEL DOCUMENTO
             const tipoDoc = tipoDocSelect.value;
-            // Limpiamos espacios o guiones accidentales que meta el usuario
             const numeroDocLimpio = numDocInput.value.replace(/[^0-9]/g, ''); 
+            let cedulaFinal = `${tipoDoc}-${numeroDocLimpio}`; 
 
-            let cedulaFinal = `${tipoDoc}-${numeroDocLimpio}`; // Formato final: V-12345678 o J-123456789
+            // 📱 PROCESAMIENTO Y VALIDACIÓN DEL TELÉFONO
+            const operadora = document.getElementById('telefono_operadora').value;
+            const numTelefonoLimpio = document.getElementById('telefono_numero').value.replace(/[^0-9]/g, '');
+            let telefonoFinal = `${operadora}-${numTelefonoLimpio}`; // Formato final: 0412-1234567
 
             try {
-                // Validación estricta en el Frontend
+                // Validación estricta Documento
                 if (tipoDoc === 'V' || tipoDoc === 'E') {
                     if (numeroDocLimpio.length !== 8) {
                         throw new Error("La cédula de identidad debe tener exactamente 8 números enteros.");
@@ -172,6 +193,11 @@
                     if (numeroDocLimpio.length !== 9) {
                         throw new Error("El RIF comercial debe tener exactamente 9 números enteros.");
                     }
+                }
+
+                // Validación estricta Teléfono
+                if (numTelefonoLimpio.length !== 7) {
+                    throw new Error("El número de teléfono debe tener exactamente 7 dígitos.");
                 }
 
                 if (!codigo) {
@@ -188,17 +214,17 @@
                 if (qrError || !qrData) throw new Error("El código introducido no es válido.");
                 if (qrData.estado === 'Usado') throw new Error("¡Este código QR ya fue utilizado!");
 
-                // PASO 2: Insertar participante en Supabase con su Cédula/RIF bien estructurada
+                // PASO 2: Insertar participante en Supabase
                 const { error: insertError } = await _supabase
                     .from('participantes')
-                    .insert([{ nombre, cedula: cedulaFinal, telefono, correo, ciudad, token_qr_usado: codigo }]);
+                    .insert([{ nombre, cedula: cedulaFinal, telefono: telefonoFinal, correo, ciudad, token_qr_usado: codigo }]);
 
                 if (insertError) throw new Error("No se pudieron guardar tus datos.");
 
                 // PASO 3: Envío del correo vía EmailJS 
                 try {
                     await emailjs.send("service_7i0v0tc", "template_gd939sf", {
-                        nombre, correo, codigo, cedula: cedulaFinal, telefono, ciudad
+                        nombre, correo, codigo, cedula: cedulaFinal, telefono: telefonoFinal, ciudad
                     });
                 } catch (errorEmail) {
                     console.error("Error en EmailJS:", errorEmail);
@@ -208,12 +234,12 @@
                 await _supabase.from('codigos_qr').update({ estado: 'Usado' }).eq('token_qr', codigo);
 
                 // MUESTRA DE ÉXITO VISUAL
-                document.getElementById('alerta-exito').innerText = `¡Registro Exitoso, ${nombre}! Mucha suerte en el sorteo, Recuerda seguirnos en nuestras redes sociales y enviarnos un mensaje a nuestro whatsapp`;
+                document.getElementById('alerta-exito').innerText = `¡Registro Exitoso, ${nombre}! Mucha suerte en el sorteo. Recuerda seguirnos en nuestras redes sociales y enviarnos un mensaje a nuestro WhatsApp.`;
                 document.getElementById('alerta-exito').style.display = 'block';
                 document.getElementById('formulario-promo').reset(); 
 
                 // PASO 5: Redirección Mágica a WhatsApp
-                const textoMensaje = `¡Hola *Industrias Pollo Premium 5.8*! 👋 Acabo de registrarme con éxito en el sorteo semanal. 🍗\n\n*Mis Datos:*\n• Nombre: ${nombre}\n• Documento: *${cedulaFinal}*\n• Código QR: *${codigo}*`;
+                const textoMensaje = `¡Hola *Industrias Pollo Premium 5.8*! 👋 Acabo de registrarme con éxito en el sorteo semanal. 🍗\n\n*Mis Datos:*\n• Nombre: ${nombre}\n• Documento: *${cedulaFinal}*\n• Teléfono: *${telefonoFinal}*\n• Código QR: *${codigo}*`;
                 const urlWhatsapp = `https://api.whatsapp.com/send?phone=${WHATSAPP_EMPRESA}&text=${encodeURIComponent(textoMensaje)}`;
                 
                 setTimeout(() => {
