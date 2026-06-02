@@ -168,23 +168,31 @@
             document.getElementById('alerta-error').style.display = 'none';
             document.getElementById('alerta-exito').style.display = 'none';
 
-            const codigo = document.getElementById('codigo').value.trim();
-            const nombre = document.getElementById('nombre').value.trim();
-            const correo = document.getElementById('correo').value.trim();
-            const ciudad = document.getElementById('ciudad').value;
-
-            // ⚡ PROCESAMIENTO Y VALIDACIÓN DEL DOCUMENTO
-            const tipoDoc = tipoDocSelect.value;
-            const numeroDocLimpio = numDocInput.value.replace(/[^0-9]/g, ''); 
-            let cedulaFinal = `${tipoDoc}-${numeroDocLimpio}`; 
-
-            // 📱 PROCESAMIENTO Y VALIDACIÓN DEL TELÉFONO
-            const operadora = document.getElementById('telefono_operadora').value;
-            const numTelefonoLimpio = document.getElementById('telefono_numero').value.replace(/[^0-9]/g, '');
-            let telefonoFinal = `${operadora}-${numTelefonoLimpio}`; // Formato final: 0412-1234567
-
             try {
-                // Validación estricta Documento
+                // 1. CAPTURA Y LIMPIEZA INICIAL DE VALORES
+                const codigo = document.getElementById('codigo').value.trim();
+                const nombre = document.getElementById('nombre').value.trim();
+                const correo = document.getElementById('correo').value.trim();
+                const ciudad = document.getElementById('ciudad').value;
+
+                const tipoDoc = tipoDocSelect.value;
+                const numeroDocLimpio = numDocInput.value.replace(/[^0-9]/g, ''); 
+                let cedulaFinal = `${tipoDoc}-${numeroDocLimpio}`; 
+
+                const operadora = document.getElementById('telefono_operadora').value;
+                const numTelefonoLimpio = document.getElementById('telefono_numero').value.replace(/[^0-9]/g, '');
+                let telefonoFinal = `${operadora}-${numTelefonoLimpio}`;
+
+                // 2. CONTROL DE SEGURIDAD INTERNO: VALIDACIÓN DE CAMPOS VACÍOS ANTES DE TOCAR SUPABASE
+                if (!nombre || !correo || !ciudad || !numeroDocLimpio || !numTelefonoLimpio) {
+                    throw new Error("Por favor, rellene todos los campos del formulario de manera correcta.");
+                }
+
+                if (!codigo) {
+                    throw new Error("Error: No se ha detectado ningún código QR válido en el enlace.");
+                }
+
+                // 3. VALIDACIÓN ESTRICTA DE LONGITUDES Y FORMATOS
                 if (tipoDoc === 'V' || tipoDoc === 'E') {
                     if (numeroDocLimpio.length !== 8) {
                         throw new Error("La cédula de identidad debe tener exactamente 8 números enteros.");
@@ -195,14 +203,14 @@
                     }
                 }
 
-                // Validación estricta Teléfono
                 if (numTelefonoLimpio.length !== 7) {
                     throw new Error("El número de teléfono debe tener exactamente 7 dígitos.");
                 }
 
-                if (!codigo) {
-                    throw new Error("Error: No se ha detectado ningún código QR válido.");
-                }
+                // -----------------------------------------------------------------
+                // HASTA ESTA LÍNEA EL CÓDIGO ESTÁ COMPLETAMENTE LIMPIO Y SEGURO.
+                // SI DETECTA UN ERROR, SALTA AL CATCH SIN PERJUDICAR EL CÓDIGO QR.
+                // -----------------------------------------------------------------
 
                 // PASO 1: Verificar el estado del código QR en Supabase
                 const { data: qrData, error: qrError } = await _supabase
@@ -219,9 +227,9 @@
                     .from('participantes')
                     .insert([{ nombre, cedula: cedulaFinal, telefono: telefonoFinal, correo, ciudad, token_qr_usado: codigo }]);
 
-                if (insertError) throw new Error("No se pudieron guardar tus datos.");
+                if (insertError) throw new Error("No se pudieron registrar tus datos en la base de datos.");
 
-                // PASO 3: Envío del correo vía EmailJS 
+                // PASO 3: Envío del correo vía EmailJS (Se ejecuta en segundo plano)
                 try {
                     await emailjs.send("service_7i0v0tc", "template_gd939sf", {
                         nombre, correo, codigo, cedula: cedulaFinal, telefono: telefonoFinal, ciudad
@@ -230,8 +238,13 @@
                     console.error("Error en EmailJS:", errorEmail);
                 }
 
-                // PASO 4: "Quemar" el código cambiándolo a 'Usado'
-                await _supabase.from('codigos_qr').update({ estado: 'Usado' }).eq('token_qr', codigo);
+                // PASO 4: "Quemar" el código cambiándolo a 'Usado' (Último paso crítico de la DB)
+                const { error: updateError } = await _supabase
+                    .from('codigos_qr')
+                    .update({ estado: 'Usado' })
+                    .eq('token_qr', codigo);
+
+                if (updateError) throw new Error("Error crítico al procesar el cupón de la promoción.");
 
                 // MUESTRA DE ÉXITO VISUAL
                 document.getElementById('alerta-exito').innerText = `¡Registro Exitoso, ${nombre}! Mucha suerte en el sorteo. Recuerda seguirnos en nuestras redes sociales y enviarnos un mensaje a nuestro WhatsApp.`;
@@ -247,6 +260,7 @@
                 }, 2000);
 
             } catch (err) {
+                // Cualquier fallo detiene el flujo aquí, muestra la alerta y NO quema el QR en Supabase
                 document.getElementById('alerta-error').innerText = err.message;
                 document.getElementById('alerta-error').style.display = 'block';
             } finally {
