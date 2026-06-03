@@ -26,6 +26,12 @@
         .grupo-mixto { display: flex; gap: 10px; }
         .grupo-mixto select { width: 35%; }
         .grupo-mixto input { width: 65%; }
+        
+        /* Contenedor especial para el arroba de Instagram */
+        .input-instagram-container { position: relative; display: flex; align-items: center; }
+        .input-instagram-container span { position: absolute; left: 14px; color: #a0aec0; font-weight: 600; font-size: 1rem; }
+        .input-instagram-container input { padding-left: 30px; }
+
         .boton-enviar { width: 100%; background: #d32f2f; color: white; border: none; padding: 15px; font-size: 1.1rem; font-weight: 700; border-radius: 8px; cursor: pointer; margin-top: 10px; }
         .boton-enviar:disabled { background: #cbd5e1; cursor: not-allowed; }
         .footer { text-align: center; padding: 20px; font-size: 0.75rem; color: #94a3b8; background-color: #f8fafc; border-top: 1px solid #e2e8f0; }
@@ -95,6 +101,15 @@
             </div>
 
             <div class="grupo-campo">
+                <label for="instagram">Usuario de Instagram</label>
+                <div class="input-instagram-container">
+                    <span>@</span>
+                    <input type="text" id="instagram" placeholder="pollopremium5.8" required>
+                </div>
+                <span class="texto-ayuda">Indícanos tu usuario sin el símbolo @ (Ej: juan_perez).</span>
+            </div>
+
+            <div class="grupo-campo">
                 <label for="correo">Correo Electrónico</label>
                 <input type="email" id="correo" placeholder="Ej: johnDoe@email.com" required>
             </div>
@@ -126,10 +141,10 @@
 
         const WHATSAPP_EMPRESA = "584143329200"; 
 
-        // Dynamic placeholder helper para Documentos
         const tipoDocSelect = document.getElementById('documento_tipo');
         const numDocInput = document.getElementById('documento_numero');
         const ayudaDocText = document.getElementById('ayuda-doc');
+        const instagramInput = document.getElementById('instagram');
 
         tipoDocSelect.addEventListener('change', () => {
             if (tipoDocSelect.value === 'J') {
@@ -141,11 +156,16 @@
             }
         });
 
-        // 🌟 Filtro estricto: Solo permitir números en el campo de cédula y teléfono mientras escriben
+        // Filtro para cédula y teléfono
         [numDocInput, document.getElementById('telefono_numero')].forEach(input => {
             input.addEventListener('input', (e) => {
                 e.target.value = e.target.value.replace(/[^0-9]/g, '');
             });
+        });
+
+        // Filtro para Instagram: Remover espacios, arrobas o mayúsculas incorrectas en tiempo real
+        instagramInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[\s@]/g, '').toLowerCase();
         });
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -169,11 +189,11 @@
             document.getElementById('alerta-exito').style.display = 'none';
 
             try {
-                // 1. CAPTURA Y LIMPIEZA INICIAL DE VALORES
                 const codigo = document.getElementById('codigo').value.trim();
                 const nombre = document.getElementById('nombre').value.trim();
                 const correo = document.getElementById('correo').value.trim();
                 const ciudad = document.getElementById('ciudad').value;
+                const instagram = instagramInput.value.trim();
 
                 const tipoDoc = tipoDocSelect.value;
                 const numeroDocLimpio = numDocInput.value.replace(/[^0-9]/g, ''); 
@@ -183,8 +203,7 @@
                 const numTelefonoLimpio = document.getElementById('telefono_numero').value.replace(/[^0-9]/g, '');
                 let telefonoFinal = `${operadora}-${numTelefonoLimpio}`;
 
-                // 2. CONTROL DE SEGURIDAD INTERNO: VALIDACIÓN DE CAMPOS VACÍOS ANTES DE TOCAR SUPABASE
-                if (!nombre || !correo || !ciudad || !numeroDocLimpio || !numTelefonoLimpio) {
+                if (!nombre || !correo || !ciudad || !numeroDocLimpio || !numTelefonoLimpio || !instagram) {
                     throw new Error("Por favor, rellene todos los campos del formulario de manera correcta.");
                 }
 
@@ -192,7 +211,6 @@
                     throw new Error("Error: No se ha detectado ningún código QR válido en el enlace.");
                 }
 
-                // 3. VALIDACIÓN ESTRICTA DE LONGITUDES Y FORMATOS
                 if (tipoDoc === 'V' || tipoDoc === 'E') {
                     if (numeroDocLimpio.length !== 8) {
                         throw new Error("La cédula de identidad debe tener exactamente 8 números enteros.");
@@ -207,11 +225,6 @@
                     throw new Error("El número de teléfono debe tener exactamente 7 dígitos.");
                 }
 
-                // -----------------------------------------------------------------
-                // HASTA ESTA LÍNEA EL CÓDIGO ESTÁ COMPLETAMENTE LIMPIO Y SEGURO.
-                // SI DETECTA UN ERROR, SALTA AL CATCH SIN PERJUDICAR EL CÓDIGO QR.
-                // -----------------------------------------------------------------
-
                 // PASO 1: Verificar el estado del código QR en Supabase
                 const { data: qrData, error: qrError } = await _supabase
                     .from('codigos_qr')
@@ -222,7 +235,7 @@
                 if (qrError || !qrData) throw new Error("El código introducido no es válido.");
                 if (qrData.estado === 'Usado') throw new Error("¡Este código QR ya fue utilizado!");
 
-                // PASO 2: Insertar participante en Supabase (Se incluye el campo estado_sorteo exacto)
+                // PASO 2: Insertar participante en Supabase (Se añade la columna instagram)
                 const { error: insertError } = await _supabase
                     .from('participantes')
                     .insert([{ 
@@ -232,21 +245,22 @@
                         correo, 
                         ciudad, 
                         token_qr_usado: codigo,
-                        estado_sorteo: 'Pendiente'
+                        estado_sorteo: 'Pendiente',
+                        instagram: instagram
                     }]);
 
                 if (insertError) throw new Error("No se pudieron registrar tus datos en la base de datos.");
 
-                // PASO 3: Envío del correo vía EmailJS (Se ejecuta en segundo plano)
+                // PASO 3: Envío del correo vía EmailJS (Se agrega instagram al reporte)
                 try {
                     await emailjs.send("service_7i0v0tc", "template_gd939sf", {
-                        nombre, correo, codigo, cedula: cedulaFinal, telefono: telefonoFinal, ciudad
+                        nombre, correo, codigo, cedula: cedulaFinal, telefono: telefonoFinal, ciudad, instagram: `@${instagram}`
                     });
                 } catch (errorEmail) {
                     console.error("Error en EmailJS:", errorEmail);
                 }
 
-                // PASO 4: "Quemar" el código cambiándolo a 'Usado' (Último paso crítico de la DB)
+                // PASO 4: "Quemar" el código cambiándolo a 'Usado'
                 const { error: updateError } = await _supabase
                     .from('codigos_qr')
                     .update({ estado: 'Usado' })
@@ -259,8 +273,8 @@
                 document.getElementById('alerta-exito').style.display = 'block';
                 document.getElementById('formulario-promo').reset(); 
 
-                // PASO 5: Redirección Mágica a WhatsApp
-                const textoMensaje = `¡Hola *Industrias Pollo Premium 5.8*! 👋 Acabo de registrarme con éxito en el sorteo semanal. 🍗\n\n*Mis Datos:*\n• Nombre: ${nombre}\n• Documento: *${cedulaFinal}*\n• Teléfono: *${telefonoFinal}*\n• Código QR: *${codigo}*`;
+                // PASO 5: Redirección Mágica a WhatsApp (Incluyendo datos de Instagram)
+                const textoMensaje = `¡Hola *Industrias Pollo Premium 5.8*! 👋 Acabo de registrarme con éxito en el sorteo semanal. 🍗\n\n*Mis Datos:*\n• Nombre: ${nombre}\n• Documento: *${cedulaFinal}*\n• Teléfono: *${telefonoFinal}*\n• Instagram: *@${instagram}*\n• Código QR: *${codigo}*`;
                 const urlWhatsapp = `https://api.whatsapp.com/send?phone=${WHATSAPP_EMPRESA}&text=${encodeURIComponent(textoMensaje)}`;
                 
                 setTimeout(() => {
