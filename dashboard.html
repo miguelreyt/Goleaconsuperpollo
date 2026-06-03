@@ -12,7 +12,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #f7f9fa; color: #333; padding: 20px; }
         
-        .contenedor-admin { width: 100%; max-width: 1000px; margin: 0 auto; background: #ffffff; border-radius: 15px; box-shadow: 0px 4px 15px rgba(0,0,0,0.05); border: 1px solid #e1e8ed; overflow: hidden; }
+        .contenedor-admin { width: 100%; max-width: 1050px; margin: 0 auto; background: #ffffff; border-radius: 15px; box-shadow: 0px 4px 15px rgba(0,0,0,0.05); border: 1px solid #e1e8ed; overflow: hidden; }
         .header-admin { background: linear-gradient(135deg, #d32f2f, #b71c1c); color: white; padding: 25px; text-align: center; position: relative; }
         .header-admin h1 { font-size: 1.8rem; margin-bottom: 5px; }
         .header-admin p { font-size: 0.9rem; opacity: 0.9; }
@@ -28,12 +28,13 @@
 
         /* Tabla Responsiva */
         .tabla-contenedor { width: 100%; overflow-x: auto; padding: 10px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 700px; }
         th { background-color: #4a5568; color: white; padding: 12px; font-size: 0.9rem; text-transform: uppercase; }
         td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem; }
         tr:hover { background-color: #f1f5f9; }
         
         .badge-qr { background: #e2e8f0; color: #4a5568; padding: 3px 8px; border-radius: 5px; font-family: monospace; font-size: 0.85rem; }
+        .badge-estado { background: #fff8e1; color: #b78103; padding: 3px 8px; border-radius: 5px; font-weight: bold; font-size: 0.85rem; }
 
         /* Modal del Ganador */
         .modal-ganador { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
@@ -73,10 +74,11 @@
                         <th>Ciudad</th>
                         <th>Correo Electrónico</th>
                         <th>Código QR Usado</th>
+                        <th>Estado Sorteo</th>
                     </tr>
                 </thead>
                 <tbody id="cuerpo-tabla">
-                    </tbody>
+                </tbody>
             </table>
         </div>
     </div>
@@ -86,34 +88,32 @@
             <h2>¡Tenemos un Ganador! 🏆</h2>
             <div id="animacion-nombre" class="nombre-ganador">Seleccionando...</div>
             <div id="datos-ganador" class="datos-ganador" style="display: none;">
-                </div>
+            </div>
             <button id="btn-cerrar-modal" class="btn-cerrar" style="display: none;">Cerrar y Continuar</button>
         </div>
     </div>
 
     <script>
-        // Tus credenciales de Supabase
         const SUPABASE_URL = "https://lkqixjlbbibnlufgldaw.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrcWl4amxiYmlibmx1ZmdsZGF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNjIzOTYsImV4cCI6MjA5NTYzODM5Nn0.mhZ1gGWozhSETPINmS0cyUCrDV4LcmUMPzDTDWq6bcI"; 
         
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        let listaParticipantes = []; // Aquí guardaremos los registros localmente
+        let listaParticipantes = []; 
 
         // Cargar los participantes apenas abra la página
         async function cargarParticipantes() {
             try {
-                // Hacemos el SELECT público sin restricciones de RLS
+                // Se cambió 'created_at' por la columna real de tu tabla: 'fecha_registro'
                 const { data, error } = await _supabase
                     .from('participantes')
                     .select('*')
-                    .order('created_at', { ascending: false }); // Los más recientes primero
+                    .order('fecha_registro', { ascending: false }); 
 
                 if (error) throw error;
 
                 listaParticipantes = data || [];
                 actualizarTabla(listaParticipantes);
                 
-                // Ocultar texto de carga y mostrar tabla
                 document.getElementById('cargando-texto').style.display = 'none';
                 document.getElementById('tabla-participantes').style.display = 'table';
                 document.getElementById('contador').innerText = `Participantes: ${listaParticipantes.length}`;
@@ -127,10 +127,10 @@
         // Renderizar o pintar los datos en la tabla HTML
         function actualizarTabla(datos) {
             const cuerpoTabla = document.getElementById('cuerpo-tabla');
-            cuerpoTabla.innerHTML = ''; // Limpiar tabla
+            cuerpoTabla.innerHTML = ''; 
 
             if (datos.length === 0) {
-                cuerpoTabla.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#777;">No se encontraron registros.</td></tr>`;
+                cuerpoTabla.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#777;">No se encontraron registros.</td></tr>`;
                 return;
             }
 
@@ -143,6 +143,7 @@
                     <td>${p.ciudad || 'N/P'}</td>
                     <td>${p.correo || 'N/P'}</td>
                     <td><span class="badge-qr">${p.token_qr_usado || 'N/P'}</span></td>
+                    <td><span class="badge-estado">${p.estado_sorteo || 'Pendiente'}</span></td>
                 `;
                 cuerpoTabla.appendChild(fila);
             });
@@ -170,50 +171,43 @@
             const datosGanadorDiv = document.getElementById('datos-ganador');
             const btnCerrar = document.getElementById('btn-cerrar-modal');
 
-            // Resetear elementos del modal
             modal.style.display = 'flex';
             datosGanadorDiv.style.display = 'none';
             btnCerrar.style.display = 'none';
 
             let cambios = 0;
-            const intervaloTiempo = 80; // Velocidad de cambio de nombres (milisegundos)
-            const duracionTotal = 3000; // Cuánto dura girando la ruleta (3 segundos)
+            const intervaloTiempo = 80; 
+            const duracionTotal = 3000; 
             const maxCambios = duracionTotal / intervaloTiempo;
 
-            // Iniciar animación simulada cambiando nombres al azar rápidamente
             const iteracion = setInterval(() => {
                 const indiceAleatorio = Math.floor(Math.random() * listaParticipantes.length);
                 animacionNombre.innerText = listaParticipantes[indiceAleatorio].nombre;
                 cambios++;
 
                 if (cambios >= maxCambios) {
-                    clearInterval(iteracion); // Detener ruleta
+                    clearInterval(iteracion); 
                     
-                    // Elegir al verdadero ganador final
                     const ganadorFinal = listaParticipantes[Math.floor(Math.random() * listaParticipantes.length)];
-                    
-                    // Mostrar ganador definitivo
                     animacionNombre.innerText = ganadorFinal.nombre;
                     
-                    // Mostrar los datos de contacto estructurados para llamarlo o escribirle
                     datosGanadorDiv.innerHTML = `
                         <strong>🪪 Documento:</strong> ${ganadorFinal.cedula}<br>
                         <strong>📞 Teléfono:</strong> ${ganadorFinal.telefono}<br>
                         <strong>📍 Ciudad:</strong> ${ganadorFinal.ciudad}<br>
                         <strong>✉️ Correo:</strong> ${ganadorFinal.correo}<br>
-                        <strong>🎫 Ticket QR:</strong> ${ganadorFinal.token_qr_usado}
+                        <strong>🎫 Ticket QR:</strong> ${ganadorFinal.token_qr_usado}<br>
+                        <strong>📊 Estado:</strong> ${ganadorFinal.estado_sorteo || 'Pendiente'}
                     `;
                     
                     datosGanadorDiv.style.display = 'block';
                     btnCerrar.style.display = 'inline-block';
 
-                    // Lanza una explosión de confeti en la pantalla digital
                     lanzarConfeti();
                 }
             }, intervaloTiempo);
         });
 
-        // Función estética para celebrar al ganador
         function lanzarConfeti() {
             var duracion = 2 * 1000;
             var fin = Date.now() + duracion;
@@ -228,12 +222,10 @@
             }());
         }
 
-        // Cerrar ventana del ganador
         document.getElementById('btn-cerrar-modal').addEventListener('click', () => {
             document.getElementById('modal-ganador').style.display = 'none';
         });
 
-        // Ejecutar carga inicial al abrir
         window.onload = cargarParticipantes;
     </script>
 </body>
