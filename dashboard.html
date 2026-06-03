@@ -73,8 +73,7 @@
                         <th>Teléfono</th>
                         <th>Ciudad</th>
                         <th>Correo Electrónico</th>
-                        <th>Código QR Usado</th>
-                        <th>Estado Sorteo</th>
+                        <th>Código</th>
                     </tr>
                 </thead>
                 <tbody id="cuerpo-tabla">
@@ -143,7 +142,6 @@
                     <td>${p.ciudad || 'N/P'}</td>
                     <td>${p.correo || 'N/P'}</td>
                     <td><span class="badge-qr">${p.token_qr_usado || 'N/P'}</span></td>
-                    <td><span class="badge-estado">${p.estado_sorteo || 'Pendiente'}</span></td>
                 `;
                 cuerpoTabla.appendChild(fila);
             });
@@ -197,7 +195,6 @@
                         <strong>📍 Ciudad:</strong> ${ganadorFinal.ciudad}<br>
                         <strong>✉️ Correo:</strong> ${ganadorFinal.correo}<br>
                         <strong>🎫 Ticket QR:</strong> ${ganadorFinal.token_qr_usado}<br>
-                        <strong>📊 Estado:</strong> ${ganadorFinal.estado_sorteo || 'Pendiente'}
                     `;
                     
                     datosGanadorDiv.style.display = 'block';
