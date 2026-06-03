@@ -12,7 +12,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #f7f9fa; color: #333; padding: 20px; }
         
-        .contenedor-admin { width: 100%; max-width: 1050px; margin: 0 auto; background: #ffffff; border-radius: 15px; box-shadow: 0px 4px 15px rgba(0,0,0,0.05); border: 1px solid #e1e8ed; overflow: hidden; }
+        .contenedor-admin { width: 100%; max-width: 1150px; margin: 0 auto; background: #ffffff; border-radius: 15px; box-shadow: 0px 4px 15px rgba(0,0,0,0.05); border: 1px solid #e1e8ed; overflow: hidden; }
         .header-admin { background: linear-gradient(135deg, #d32f2f, #b71c1c); color: white; padding: 25px; text-align: center; position: relative; }
         .header-admin h1 { font-size: 1.8rem; margin-bottom: 5px; }
         .header-admin p { font-size: 0.9rem; opacity: 0.9; }
@@ -28,12 +28,17 @@
 
         /* Tabla Responsiva */
         .tabla-contenedor { width: 100%; overflow-x: auto; padding: 10px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 700px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 850px; }
         th { background-color: #4a5568; color: white; padding: 12px; font-size: 0.9rem; text-transform: uppercase; }
         td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem; }
         tr:hover { background-color: #f1f5f9; }
         
         .badge-qr { background: #e2e8f0; color: #4a5568; padding: 3px 8px; border-radius: 5px; font-family: monospace; font-size: 0.85rem; }
+        
+        /* Estilos de enlaces de contacto */
+        .link-contacto { font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+        .link-wa { color: #25D366; }
+        .link-ig { color: #E1306C; }
 
         /* Modal del Ganador */
         .modal-ganador { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
@@ -53,11 +58,11 @@
     <div class="contenedor-admin">
         <div class="header-admin">
             <h1> Ganador del concurso "Golea con Super Pollo!!!" 🍗</h1>
-            <p>Industrias Pollo Premium 5.8, C.A. </p>
+            <p>Industrias Pollo Premium 5.8, C.A. — Panel de Control</p>
         </div>
 
         <div class="panel-acciones">
-            <input type="text" id="buscador" class="buscador" placeholder="🔍 Buscar por nombre o cédula...">
+            <input type="text" id="buscador" class="buscador" placeholder="🔍 Buscar por nombre, cédula o IG...">
             <div id="contador" class="estadistica">Participantes: Cargando...</div>
             <button id="btn-sorteo" class="btn-sorteo">🎉 ¡ELEGIR GANADOR AL AZAR!</button>
         </div>
@@ -70,9 +75,10 @@
                         <th>Nombre / Razón Social</th>
                         <th>Cédula / RIF</th>
                         <th>Teléfono</th>
+                        <th>Instagram</th>
                         <th>Ciudad</th>
                         <th>Correo Electrónico</th>
-                        <th>Código</th>
+                        <th>Código QR</th>
                     </tr>
                 </thead>
                 <tbody id="cuerpo-tabla">
@@ -97,9 +103,8 @@
         
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let listaParticipantes = []; 
-        let ganadorActual = null; // Almacenará al ganador definitivo de la ronda
+        let ganadorActual = null; 
 
-        // Cargar los participantes apenas abra la página
         async function cargarParticipantes() {
             try {
                 const { data, error } = await _supabase
@@ -122,7 +127,6 @@
             }
         }
 
-        // Renderizar o pintar los datos en la tabla HTML
         function actualizarTabla(datos) {
             const cuerpoTabla = document.getElementById('cuerpo-tabla');
             cuerpoTabla.innerHTML = ''; 
@@ -134,10 +138,18 @@
 
             datos.forEach(p => {
                 const fila = document.createElement('tr');
+                
+                // Formatear el link de Instagram de manera limpia
+                const igUser = p.instagram ? p.instagram.replace(/@/g, '').trim() : '';
+                const igColumna = igUser 
+                    ? `<a href="https://instagram.com/${igUser}" target="_blank" class="link-contacto link-ig">📸 @${igUser}</a>`
+                    : '<span style="color:#aaa;">N/P</span>';
+
                 fila.innerHTML = `
                     <td style="font-weight:600;">${p.nombre}</td>
                     <td>${p.cedula || 'N/P'}</td>
-                    <td><a href="https://wa.me/${p.telefono ? p.telefono.replace(/[^0-9]/g, '') : ''}" target="_blank" style="color:#25D366; font-weight:600; text-decoration:none;">📱 ${p.telefono || 'N/P'}</a></td>
+                    <td><a href="https://wa.me/${p.telefono ? p.telefono.replace(/[^0-9]/g, '') : ''}" target="_blank" class="link-contacto link-wa">📱 ${p.telefono || 'N/P'}</a></td>
+                    <td>${igColumna}</td>
                     <td>${p.ciudad || 'N/P'}</td>
                     <td>${p.correo || 'N/P'}</td>
                     <td><span class="badge-qr">${p.token_qr_usado || 'N/P'}</span></td>
@@ -146,17 +158,16 @@
             });
         }
 
-        // Buscador interactivo en tiempo real
         document.getElementById('buscador').addEventListener('input', (e) => {
             const busqueda = e.target.value.toLowerCase().trim();
             const filtrados = listaParticipantes.filter(p => 
                 p.nombre.toLowerCase().includes(busqueda) || 
-                (p.cedula && p.cedula.toLowerCase().includes(busqueda))
+                (p.cedula && p.cedula.toLowerCase().includes(busqueda)) ||
+                (p.instagram && p.instagram.toLowerCase().includes(busqueda))
             );
             actualizarTabla(filtrados);
         });
 
-        // 🎁 LOGICA MÁGICA DEL SORTEO (EFECTO RULETA / TÓMBOLA)
         document.getElementById('btn-sorteo').addEventListener('click', () => {
             if (listaParticipantes.length === 0) {
                 alert("No hay participantes registrados para realizar el sorteo.");
@@ -171,7 +182,7 @@
             modal.style.display = 'flex';
             datosGanadorDiv.style.display = 'none';
             btnCerrar.style.display = 'none';
-            ganadorActual = null; // Resetear ganador anterior
+            ganadorActual = null; 
 
             let cambios = 0;
             const intervaloTiempo = 80; 
@@ -186,15 +197,14 @@
                 if (cambios >= maxCambios) {
                     clearInterval(iteracion); 
                     
-                    // Guardar el ganador definitivo en la variable global
                     ganadorActual = listaParticipantes[Math.floor(Math.random() * listaParticipantes.length)];
                     animacionNombre.innerText = ganadorActual.nombre;
                     
                     datosGanadorDiv.innerHTML = `
                         <strong>🪪 Documento:</strong> ${ganadorActual.cedula}<br>
                         <strong>📞 Teléfono:</strong> ${ganadorActual.telefono}<br>
+                        <strong>📸 Instagram:</strong> ${ganadorActual.instagram ? '@' + ganadorActual.instagram : 'No registrado'}<br>
                         <strong>📍 Ciudad:</strong> ${ganadorActual.ciudad}<br>
-                        <strong>✉️ Correo:</strong> ${ganadorActual.correo}<br>
                         <strong>🎫 Ticket QR:</strong> ${ganadorActual.token_qr_usado}<br>
                     `;
                     
@@ -220,30 +230,21 @@
             }());
         }
 
-        // Redirección al WhatsApp del ganador al presionar Cerrar y Continuar
         document.getElementById('btn-cerrar-modal').addEventListener('click', () => {
             if (ganadorActual && ganadorActual.telefono) {
-                // Remover guiones o espacios del teléfono y agregar el prefijo de Venezuela (58) si no lo tiene
                 let numeroLimpio = ganadorActual.telefono.replace(/[^0-9]/g, '');
-                
-                // Si el número empieza por 0 (ej: 0414), quitamos el cero inicial para formatear con el código de país
                 if (numeroLimpio.startsWith('0')) {
                     numeroLimpio = numeroLimpio.substring(1);
                 }
-                
-                // Si no tiene el código de Venezuela (58) al principio, se lo añadimos automáticamente
                 if (!numeroLimpio.startsWith('58')) {
                     numeroLimpio = '58' + numeroLimpio;
                 }
 
-                const mensajeWhatsApp = "🐔🐔🐔🥳🥳🥳Felicidades eres el ganador del concurso Golea con SuperPollo🥳🥳🥳🐔🐔🐔";
+                const mensajeWhatsApp = "Felicidades eres el ganador del concurso Golea con SuperPollo";
                 const urlWhatsapp = `https://api.whatsapp.com/send?phone=${numeroLimpio}&text=${encodeURIComponent(mensajeWhatsApp)}`;
                 
-                // Abre el chat en una pestaña nueva para no perder de vista tu panel administrativo
                 window.open(urlWhatsapp, '_blank');
             }
-            
-            // Ocultar la ventana flotante
             document.getElementById('modal-ganador').style.display = 'none';
         });
 
