@@ -100,14 +100,14 @@
                 <span class="texto-ayuda">Introduzca exactamente los 7 dígitos de su número.</span>
             </div>
 
-            <div class="grupo-campo">
-                <label for="instagram">Usuario de Instagram</label>
-                <div class="input-instagram-container">
-                    <span>@</span>
-                    <input type="text" id="instagram" placeholder="pollopremium5.8" required>
-                </div>
-                <span class="texto-ayuda">Indícanos tu usuario sin el símbolo @ (Ej: juan_perez).</span>
-            </div>
+<div class="grupo-campo">
+    <label for="instagram">Tu Usuario de Instagram</label>
+    <div class="input-instagram-container">
+        <span>@</span>
+        <input type="text" id="instagram" placeholder="juanperez_58" autocomplete="off" required>
+    </div>
+    <span class="texto-ayuda">Introduce solo tu nombre de usuario (sin espacios ni el signo @).</span>
+</div>
 
             <div class="grupo-campo">
                 <label for="correo">Correo Electrónico</label>
@@ -164,9 +164,15 @@
         });
 
         // Filtro para Instagram: Remover espacios, arrobas o mayúsculas incorrectas en tiempo real
-        instagramInput.addEventListener('input', (e) => {
-            e.target.value = e.target.value.replace(/[\s@]/g, '').toLowerCase();
-        });
+// Filtro estricto para Instagram: Bloquea arrobas, espacios y limpia enlaces si los pegan
+instagramInput.addEventListener('input', (e) => {
+    let valor = e.target.value;
+    // Si el usuario pega un enlace completo de instagram, extrae solo el usuario
+    if (valor.includes('instagram.com/')) {
+        valor = valor.split('instagram.com/')[1].split('/')[0].split('?')[0];
+    }
+    e.target.value = valor.replace(/[\s@]/g, '').toLowerCase();
+});
 
         window.addEventListener('DOMContentLoaded', () => {
             const parametrosUrl = new URLSearchParams(window.location.search);
