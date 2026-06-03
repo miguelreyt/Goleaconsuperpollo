@@ -34,7 +34,6 @@
         tr:hover { background-color: #f1f5f9; }
         
         .badge-qr { background: #e2e8f0; color: #4a5568; padding: 3px 8px; border-radius: 5px; font-family: monospace; font-size: 0.85rem; }
-        .badge-estado { background: #fff8e1; color: #b78103; padding: 3px 8px; border-radius: 5px; font-weight: bold; font-size: 0.85rem; }
 
         /* Modal del Ganador */
         .modal-ganador { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
@@ -98,11 +97,11 @@
         
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let listaParticipantes = []; 
+        let ganadorActual = null; // Almacenará al ganador definitivo de la ronda
 
         // Cargar los participantes apenas abra la página
         async function cargarParticipantes() {
             try {
-                // Se cambió 'created_at' por la columna real de tu tabla: 'fecha_registro'
                 const { data, error } = await _supabase
                     .from('participantes')
                     .select('*')
@@ -172,6 +171,7 @@
             modal.style.display = 'flex';
             datosGanadorDiv.style.display = 'none';
             btnCerrar.style.display = 'none';
+            ganadorActual = null; // Resetear ganador anterior
 
             let cambios = 0;
             const intervaloTiempo = 80; 
@@ -186,15 +186,16 @@
                 if (cambios >= maxCambios) {
                     clearInterval(iteracion); 
                     
-                    const ganadorFinal = listaParticipantes[Math.floor(Math.random() * listaParticipantes.length)];
-                    animacionNombre.innerText = ganadorFinal.nombre;
+                    // Guardar el ganador definitivo en la variable global
+                    ganadorActual = listaParticipantes[Math.floor(Math.random() * listaParticipantes.length)];
+                    animacionNombre.innerText = ganadorActual.nombre;
                     
                     datosGanadorDiv.innerHTML = `
-                        <strong>🪪 Documento:</strong> ${ganadorFinal.cedula}<br>
-                        <strong>📞 Teléfono:</strong> ${ganadorFinal.telefono}<br>
-                        <strong>📍 Ciudad:</strong> ${ganadorFinal.ciudad}<br>
-                        <strong>✉️ Correo:</strong> ${ganadorFinal.correo}<br>
-                        <strong>🎫 Ticket QR:</strong> ${ganadorFinal.token_qr_usado}<br>
+                        <strong>🪪 Documento:</strong> ${ganadorActual.cedula}<br>
+                        <strong>📞 Teléfono:</strong> ${ganadorActual.telefono}<br>
+                        <strong>📍 Ciudad:</strong> ${ganadorActual.ciudad}<br>
+                        <strong>✉️ Correo:</strong> ${ganadorActual.correo}<br>
+                        <strong>🎫 Ticket QR:</strong> ${ganadorActual.token_qr_usado}<br>
                     `;
                     
                     datosGanadorDiv.style.display = 'block';
@@ -219,7 +220,30 @@
             }());
         }
 
+        // Redirección al WhatsApp del ganador al presionar Cerrar y Continuar
         document.getElementById('btn-cerrar-modal').addEventListener('click', () => {
+            if (ganadorActual && ganadorActual.telefono) {
+                // Remover guiones o espacios del teléfono y agregar el prefijo de Venezuela (58) si no lo tiene
+                let numeroLimpio = ganadorActual.telefono.replace(/[^0-9]/g, '');
+                
+                // Si el número empieza por 0 (ej: 0414), quitamos el cero inicial para formatear con el código de país
+                if (numeroLimpio.startsWith('0')) {
+                    numeroLimpio = numeroLimpio.substring(1);
+                }
+                
+                // Si no tiene el código de Venezuela (58) al principio, se lo añadimos automáticamente
+                if (!numeroLimpio.startsWith('58')) {
+                    numeroLimpio = '58' + numeroLimpio;
+                }
+
+                const mensajeWhatsApp = "Felicidades eres el ganador del concurso Golea con SuperPollo";
+                const urlWhatsapp = `https://api.whatsapp.com/send?phone=${numeroLimpio}&text=${encodeURIComponent(mensajeWhatsApp)}`;
+                
+                // Abre el chat en una pestaña nueva para no perder de vista tu panel administrativo
+                window.open(urlWhatsapp, '_blank');
+            }
+            
+            // Ocultar la ventana flotante
             document.getElementById('modal-ganador').style.display = 'none';
         });
 
