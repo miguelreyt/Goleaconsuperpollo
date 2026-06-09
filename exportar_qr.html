@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Enlaces para Imprenta - Pollo Premium</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: #f1f5f9; padding: 30px; color: #1e293b; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-top: 5px solid #d32f2f; }
+        h1 { color: #d32f2f; margin-bottom: 10px; font-size: 1.6rem; }
+        p { color: #64748b; margin-bottom: 20px; font-size: 0.95rem; line-height: 1.5; }
+        .btn { background: #ff9800; color: white; border: none; padding: 12px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.95rem; margin-right: 10px; transition: background 0.2s; }
+        .btn:hover { background: #e65100; }
+        .btn-download { background: #10b981; }
+        .btn-download:hover { background: #059669; }
+        textarea { width: 100%; height: 380px; margin-top: 20px; padding: 15px; font-family: monospace; font-size: 0.9rem; border: 1.5px solid #cbd5e1; border-radius: 8px; background: #f8fafc; resize: none; color: #334155; }
+        .contador { margin-top: 15px; font-weight: bold; color: #1e293b; display: block; font-size: 1rem; }
+        .url-base-info { background: #fff8e1; border: 1px solid #ffe082; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85rem; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>📋 Extractor de Enlaces de Producción para Imprenta</h1>
+        <p>Este sistema se conecta de forma segura a tu base de datos de Supabase, toma los tokens registrados y los une automáticamente a tu dominio de producción en GitHub Pages.</p>
+        
+        <div class="url-base-info">
+            <strong>🔗 URL Base de Producción Configurada:</strong><br>
+            https://miguelreyt.github.io/Goleaconsuperpollo/?codigo=
+        </div>
+
+        <button id="btn-cargar" class="btn">🔄 Obtener Enlaces de Producción</button>
+        <button id="btn-descargar" class="btn btn-download" style="display:none;">💾 Descargar Archivo .txt</button>
+        
+        <span id="contador" class="contador"></span>
+        
+        <textarea id="resultado" readonly placeholder="Los enlaces estructurados listos para enviar a la imprenta aparecerán aquí..."></textarea>
+    </div>
+
+    <script>
+        // Configuración idéntica con tu ruta real de producción en GitHub Pages
+        const URL_PRODUCCION = "https://miguelreyt.github.io/Goleaconsuperpollo/"; 
+        
+        const SUPABASE_URL = "https://lkqixjlbbibnlufgldaw.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrcWl4amxiYmlibmx1ZmdsZGF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNjIzOTYsImV4cCI6MjA5NTYzODM5Nn0.mhZ1gGWozhSETPINmS0cyUCrDV4LcmUMPzDTDWq6bcI";
+        
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        document.getElementById('btn-cargar').addEventListener('click', async () => {
+            const txtArea = document.getElementById('resultado');
+            const btnDescargar = document.getElementById('btn-descargar');
+            const contador = document.getElementById('contador');
+            
+            txtArea.value = "Conectando con Supabase y procesando tokens...";
+            
+            try {
+                // Descarga de manera ordenada los códigos
+                const { data, error } = await _supabase
+                    .from('codigos_qr')
+                    .select('token_qr')
+                    .order('token_qr', { ascending: true });
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    txtArea.value = "No se encontraron códigos QR guardados en la tabla 'codigos_qr'.";
+                    return;
+                }
+
+                // Generación de la estructura exacta que le diste de ejemplo
+                let listaEnlaces = data.map(item => `${URL_PRODUCCION}?codigo=${item.token_qr.trim()}`);
+                
+                // Imprime los resultados con saltos de línea (perfecto para copiar bloques a Excel)
+                txtArea.value = listaEnlaces.join('\n');
+                contador.innerText = `📈 Total de códigos QR encontrados y procesados: ${data.length}`;
+                
+                // Muestra el botón de descarga del archivo plano
+                btnDescargar.style.display = "inline-block";
+
+            } catch (err) {
+                txtArea.value = "Error al intentar obtener los datos: " + err.message;
+                console.error(err);
+            }
+        });
+
+        // Genera el archivo descargable para enviar por correo o pendrive al diseñador de la imprenta
+        document.getElementById('btn-descargar').addEventListener('click', () => {
+            const texto = document.getElementById('resultado').value;
+            const blob = new Blob([texto], { type: 'text/plain' });
+            const enlaceDescarga = document.createElement('a');
+            enlaceDescarga.download = 'enlaces_qr_imprenta_pollo_premium.txt';
+            enlaceDescarga.href = window.URL.createObjectURL(blob);
+            enlaceDescarga.click();
+        });
+    </script>
+</body>
+</html>
