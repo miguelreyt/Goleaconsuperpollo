@@ -37,8 +37,21 @@
         .texto-ayuda { font-size: 0.75rem; color: #64748b; margin-top: 4px; display: block; }
         
         .alerta { padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; font-size: 0.9rem; font-weight: 600; }
-        .alerta-exito { background-color: #e6fffa; color: #00695c; border: 1px solid #b2dfdb; }
         .alerta-error { background-color: #fff5f5; color: #c53030; border: 1px solid #feb2b2; }
+
+        /* --- ESTILOS DEL NUEVO POP-UP DE ÉXITO --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
+        .modal-content { background: white; padding: 30px 20px; border-radius: 20px; text-align: center; max-width: 420px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 3px solid #ff9800; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .modal-content h2 { color: #d32f2f; font-size: 1.8rem; margin-bottom: 5px; text-transform: uppercase; }
+        .modal-content p.sub { color: #ff9800; font-weight: bold; font-size: 1rem; margin-bottom: 20px; }
+        
+        .resumen-datos { text-align: left; background: #f8fafc; border: 1px dashed #cbd5e1; padding: 15px; border-radius: 10px; margin-bottom: 25px; font-size: 0.95rem; color: #334155; line-height: 1.6; }
+        .resumen-datos strong { color: #1e293b; }
+        
+        .btn-modal-wa { width: 100%; background: #25D366; color: white; border: none; padding: 14px; font-size: 1.05rem; font-weight: 700; border-radius: 8px; cursor: pointer; text-decoration: none; display: block; margin-top: 10px; box-shadow: 0 4px 6px rgba(37, 211, 102, 0.2); }
+        .texto-espera { font-size: 0.8rem; color: #64748b; margin-top: 12px; display: block; }
     </style>
 </head>
 <body>
@@ -56,7 +69,6 @@
 
         <div style="padding: 20px 20px 0 20px;">
             <div id="alerta-error" class="alerta alerta-error"></div>
-            <div id="alerta-exito" class="alerta alerta-exito"></div>
         </div>
 
         <form id="formulario-promo">
@@ -67,7 +79,7 @@
 
             <div class="grupo-campo">
                 <label for="nombre">Nombre y Apellido / Razón Social</label>
-                <input type="text" id="nombre" placeholder="Ej: John Doe o Inversiones 5.8, C.A." required>
+                <input type="text" id="nombre" placeholder="Ej: John Doe o Inversiones 58 C.A." required>
             </div>
 
             <div class="grupo-campo">
@@ -120,12 +132,20 @@
                     <option value="Caracas">Caracas</option>
                     <option value="Los Teques">Los Teques</option>
                     <option value="La Guaira">La Guaira</option>
+                    <option value="Maracay">Maracay</option>
                 </select>
             </div>
 
             <div class="grupo-campo">
                 <label for="tienda_compra">¿En qué tienda compraste el pollo?</label>
-                <input type="text" id="tienda_compra" placeholder="¿En qué tienda comprastre?" required>
+                <select id="tienda_compra" required>
+                    <option value="" disabled selected>Selecciona la tienda...</option>
+                    <option value="Mercado Mayor de Coche - Caracas">Mercado Mayor de Coche - Caracas</option>
+                    <option value="Antímano - Caracas">Antímano - Caracas</option>
+                    <option value="Catia La Mar - La Guaira">Catia La Mar - La Guaira</option>
+                    <option value="La Hoyada - Los Teques">La Hoyada - Los Teques</option>
+                    <option value="El Cabotaje - Los Teques">El Cabotaje - Los Teques</option>
+                </select>
             </div>
 
             <button type="submit" id="btn-registrar" class="boton-enviar">¡REGISTRARME EN LA PROMO! 🤞</button>
@@ -133,6 +153,25 @@
 
         <div class="footer">
             Industrias Pollo Premium 5.8, C.A. © 2026
+        </div>
+    </div>
+
+    <div id="modal-exito" class="modal-overlay">
+        <div class="modal-content">
+            <h2>¡Felicidades! 🎉</h2>
+            <p class="sub">Ya te encuentras participando</p>
+            
+            <div id="resumen-cliente" class="resumen-datos">
+                </div>
+
+            <p style="font-size: 0.9rem; margin-bottom: 15px; color: #475569;">
+                Para validar tu participación de forma definitiva, debes enviar tu comprobante al WhatsApp oficial.
+            </p>
+            
+            <button id="btn-ir-whatsapp" class="btn-modal-wa">
+                CONTINUAR A WHATSAPP 📱
+            </button>
+            <span class="texto-espera">Serás redirigido automáticamente en unos segundos...</span>
         </div>
     </div>
 
@@ -191,7 +230,6 @@
             boton.innerText = "Procesando registro...";
 
             document.getElementById('alerta-error').style.display = 'none';
-            document.getElementById('alerta-exito').style.display = 'none';
 
             try {
                 const codigo = document.getElementById('codigo').value.trim();
@@ -199,7 +237,7 @@
                 const correo = document.getElementById('correo').value.trim();
                 const ciudad = document.getElementById('ciudad').value;
                 const instagram = instagramInput.value.trim();
-                const tienda_compra = document.getElementById('tienda_compra').value;
+                const tiendaCompra = document.getElementById('tienda_compra').value;
 
                 const tipoDoc = tipoDocSelect.value;
                 const numeroDocLimpio = numDocInput.value.replace(/[^0-9]/g, ''); 
@@ -209,7 +247,7 @@
                 const numTelefonoLimpio = document.getElementById('telefono_numero').value.replace(/[^0-9]/g, '');
                 let telefonoFinal = `${operadora}-${numTelefonoLimpio}`;
 
-                if (!nombre || !correo || !ciudad || !numeroDocLimpio || !numTelefonoLimpio || !instagram || !tienda_compra) {
+                if (!nombre || !correo || !ciudad || !numeroDocLimpio || !numTelefonoLimpio || !instagram || !tiendaCompra) {
                     throw new Error("Por favor, rellene todos los campos del formulario de manera correcta.");
                 }
 
@@ -240,7 +278,6 @@
                 if (qrError || !qrData) throw new Error("El código introducido no es válido.");
                 if (qrData.estado === 'Usado') throw new Error("¡Este código QR ya fue utilizado!");
 
-                // PASO 2: Inserción incluyendo 'tienda_compra'
                 const { error: insertError } = await _supabase
                     .from('participantes')
                     .insert([{ 
@@ -252,15 +289,14 @@
                         token_qr_usado: codigo,
                         estado_sorteo: 'Pendiente',
                         instagram: instagram,
-                        tienda_compra: tienda_compra
+                        tienda_compra: tiendaCompra
                     }]);
 
                 if (insertError) throw new Error("No se pudieron registrar tus datos en la base de datos.");
 
-                // PASO 3: EmailJS (si deseas añadir tienda_compra a la plantilla, puedes enviarla como parámetro aquí)
                 try {
                     await emailjs.send("service_7i0v0tc", "template_gd939sf", {
-                        nombre, correo, codigo, cedula: cedulaFinal, telefono: telefonoFinal, ciudad, instagram: `@${instagram}`, tienda: tienda_compra
+                        nombre, correo, codigo, cedula: cedulaFinal, telefono: telefonoFinal, ciudad, instagram: `@${instagram}`, tienda: tiendaCompra
                     });
                 } catch (errorEmail) {
                     console.error("Error en EmailJS:", errorEmail);
@@ -273,17 +309,34 @@
 
                 if (updateError) throw new Error("Error crítico al procesar el cupón de la promoción.");
 
-                document.getElementById('alerta-exito').innerText = `¡Registro Exitoso, ${nombre}! Mucha suerte en el sorteo. Recuerda seguirnos en nuestras redes sociales y enviarnos un mensaje a nuestro WhatsApp.`;
-                document.getElementById('alerta-exito').style.display = 'block';
+                // Generación de la url de WhatsApp externa
+                const textoMensaje = `¡Hola *Industrias Pollo Premium 5.8*! 👋 Acabo de registrarme con éxito en el sorteo semanal. 🍗\n\n*Mis Datos:*\n• Nombre: ${nombre}\n• Documento: *${cedulaFinal}*\n• Teléfono: *${telefonoFinal}*\n• Instagram: *@${instagram}*\n• Ciudad: *${ciudad}*\n• Tienda de Compra: *${tiendaCompra}*\n• Código QR: *${codigo}*`;
+                const urlWhatsapp = `https://api.whatsapp.com/send?phone=${WHATSAPP_EMPRESA}&text=${encodeURIComponent(textoMensaje)}`;
+
+                // INYECCIÓN DE DATOS EN EL POP-UP
+                document.getElementById('resumen-cliente').innerHTML = `
+                    <strong>👤 Cliente:</strong> ${nombre}<br>
+                    <strong>🪪 Documento:</strong> ${cedulaFinal}<br>
+                    <strong>📱 Teléfono:</strong> ${telefonoFinal}<br>
+                    <strong>📸 Instagram:</strong> @${instagram}<br>
+                    <strong>🏪 Tienda:</strong> ${tiendaCompra}<br>
+                    <strong>🎫 Ticket QR:</strong> ${codigo}
+                `;
+
+                // MOSTRAR POP-UP VISUAL
+                const modal = document.getElementById('modal-exito');
+                modal.style.display = 'flex';
                 document.getElementById('formulario-promo').reset(); 
 
-                // PASO 5: Redirección de WhatsApp con la sucursal agregada
-                const textoMensaje = `¡Hola *Industrias Pollo Premium 5.8*! 👋 Acabo de registrarme con éxito en el sorteo semanal. 🍗\n\n*Mis Datos:*\n• Nombre: ${nombre}\n• Documento: *${cedulaFinal}*\n• Teléfono: *${telefonoFinal}*\n• Instagram: *@${instagram}*\n• Tienda de Compra: *${tienda_compra}*\n• Código QR: *${codigo}*`;
-                const urlWhatsapp = `https://api.whatsapp.com/send?phone=${WHATSAPP_EMPRESA}&text=${encodeURIComponent(textoMensaje)}`;
-                
+                // Acción al dar click manual en el botón del Pop-up
+                document.getElementById('btn-ir-whatsapp').onclick = () => {
+                    window.location.href = urlWhatsapp;
+                };
+
+                // Redirección automática tras 3.5 segundos
                 setTimeout(() => {
                     window.location.href = urlWhatsapp;
-                }, 2000);
+                }, 3500);
 
             } catch (err) {
                 document.getElementById('alerta-error').innerText = err.message;
