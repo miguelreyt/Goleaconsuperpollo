@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Sorteo - Pollo Premium</title>
+    <title>Industrias Pollo Premium</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -12,7 +12,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #f7f9fa; color: #333; padding: 20px; }
         
-        .contenedor-admin { width: 100%; max-width: 1150px; margin: 0 auto; background: #ffffff; border-radius: 15px; box-shadow: 0px 4px 15px rgba(0,0,0,0.05); border: 1px solid #e1e8ed; overflow: hidden; }
+        .contenedor-admin { width: 100%; max-width: 1250px; margin: 0 auto; background: #ffffff; border-radius: 15px; box-shadow: 0px 4px 15px rgba(0,0,0,0.05); border: 1px solid #e1e8ed; overflow: hidden; }
         .header-admin { background: linear-gradient(135deg, #d32f2f, #b71c1c); color: white; padding: 25px; text-align: center; position: relative; }
         .header-admin h1 { font-size: 1.8rem; margin-bottom: 5px; }
         .header-admin p { font-size: 0.9rem; opacity: 0.9; }
@@ -26,9 +26,9 @@
         .btn-sorteo { background: #ff9800; color: white; border: none; padding: 12px 25px; font-size: 1rem; font-weight: 700; border-radius: 8px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 8px; }
         .btn-sorteo:hover { background: #e65100; }
 
-        /* Tabla Responsiva */
+        /* Tabla Responsiva Ampliada */
         .tabla-contenedor { width: 100%; overflow-x: auto; padding: 10px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 850px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 950px; }
         th { background-color: #4a5568; color: white; padding: 12px; font-size: 0.9rem; text-transform: uppercase; }
         td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem; }
         tr:hover { background-color: #f1f5f9; }
@@ -57,12 +57,12 @@
 
     <div class="contenedor-admin">
         <div class="header-admin">
-            <h1> Ganador del concurso "Golea con Super Pollo!!!" 🍗</h1>
-            <p>Industrias Pollo Premium 5.8, C.A. — Panel de Control</p>
+            <h1> "Golea con Super Pollo!!!" 🍗</h1>
+            <p>Industrias Pollo Premium 5.8, C.A. — Sorteo Golea Con Super Pollo</p>
         </div>
 
         <div class="panel-acciones">
-            <input type="text" id="buscador" class="buscador" placeholder="🔍 Buscar por nombre, cédula o IG...">
+            <input type="text" id="buscador" class="buscador" placeholder="🔍 Buscar por nombre, cédula, IG o tienda...">
             <div id="contador" class="estadistica">Participantes: Cargando...</div>
             <button id="btn-sorteo" class="btn-sorteo">🎉 ¡ELEGIR GANADOR AL AZAR!</button>
         </div>
@@ -77,6 +77,7 @@
                         <th>Teléfono</th>
                         <th>Instagram</th>
                         <th>Ciudad</th>
+                        <th>Tienda de Compra</th> 
                         <th>Correo Electrónico</th>
                         <th>Código QR</th>
                     </tr>
@@ -132,14 +133,13 @@
             cuerpoTabla.innerHTML = ''; 
 
             if (datos.length === 0) {
-                cuerpoTabla.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#777;">No se encontraron registros.</td></tr>`;
+                cuerpoTabla.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#777;">No se encontraron registros.</td></tr>`;
                 return;
             }
 
             datos.forEach(p => {
                 const fila = document.createElement('tr');
                 
-                // Formatear el link de Instagram de manera limpia
                 const igUser = p.instagram ? p.instagram.replace(/@/g, '').trim() : '';
                 const igColumna = igUser 
                     ? `<a href="https://instagram.com/${igUser}" target="_blank" class="link-contacto link-ig">📸 @${igUser}</a>`
@@ -151,19 +151,21 @@
                     <td><a href="https://wa.me/${p.telefono ? p.telefono.replace(/[^0-9]/g, '') : ''}" target="_blank" class="link-contacto link-wa">📱 ${p.telefono || 'N/P'}</a></td>
                     <td>${igColumna}</td>
                     <td>${p.ciudad || 'N/P'}</td>
-                    <td>${p.correo || 'N/P'}</td>
+                    <td style="font-weight:500; color:#4a5568;">${p.tienda_compra || 'N/P'}</td> <td>${p.correo || 'N/P'}</td>
                     <td><span class="badge-qr">${p.token_qr_usado || 'N/P'}</span></td>
                 `;
                 cuerpoTabla.appendChild(fila);
             });
         }
 
+        // Permite filtrar también por el nombre de la sucursal o establecimiento
         document.getElementById('buscador').addEventListener('input', (e) => {
             const busqueda = e.target.value.toLowerCase().trim();
             const filtrados = listaParticipantes.filter(p => 
                 p.nombre.toLowerCase().includes(busqueda) || 
                 (p.cedula && p.cedula.toLowerCase().includes(busqueda)) ||
-                (p.instagram && p.instagram.toLowerCase().includes(busqueda))
+                (p.instagram && p.instagram.toLowerCase().includes(busqueda)) ||
+                (p.tienda_compra && p.tienda_compra.toLowerCase().includes(busqueda))
             );
             actualizarTabla(filtrados);
         });
@@ -200,11 +202,13 @@
                     ganadorActual = listaParticipantes[Math.floor(Math.random() * listaParticipantes.length)];
                     animacionNombre.innerText = ganadorActual.nombre;
                     
+                    // Se agrega el local al desglose emergente del ganador
                     datosGanadorDiv.innerHTML = `
                         <strong>🪪 Documento:</strong> ${ganadorActual.cedula}<br>
                         <strong>📞 Teléfono:</strong> ${ganadorActual.telefono}<br>
                         <strong>📸 Instagram:</strong> ${ganadorActual.instagram ? '@' + ganadorActual.instagram : 'No registrado'}<br>
                         <strong>📍 Ciudad:</strong> ${ganadorActual.ciudad}<br>
+                        <strong>🏪 Tienda de Compra:</strong> ${ganadorActual.tienda_compra || 'No registrada'}<br>
                         <strong>🎫 Ticket QR:</strong> ${ganadorActual.token_qr_usado}<br>
                     `;
                     
