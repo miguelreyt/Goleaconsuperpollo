@@ -10,80 +10,136 @@
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: #f7f9fa; color: #333; display: flex; justify-content: center; padding: 20px 10px; }
-        .contenedor-movil { width: 100%; max-width: 450px; background: #ffffff; border-radius: 15px; box-shadow: 0px 4px 15px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #e1e8ed; }
-        .header { text-align: center; padding: 20px; background-color: #ffffff; border-bottom: 2px solid #f0f3f5; }
-        .logo-simulado { font-weight: 800; font-size: 1.3rem; color: #d32f2f; text-transform: uppercase; }
-        .logo-sub { font-size: 0.8rem; color: #777; display: block; }
-        .banner { background: linear-gradient(135deg, #ff9800, #d32f2f); color: #ffffff; padding: 30px 20px; text-align: center; }
-        .banner h1 { font-size: 1.6rem; margin-bottom: 10px; }
-        form { padding: 25px 20px; }
-        .grupo-campo { margin-bottom: 20px; }
-        label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: #4a5568; }
-        input, select { width: 100%; padding: 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; background-color: #f8fafc; }
-        input:focus, select:focus { outline: none; border-color: #ff9800; background-color: #ffffff; }
-        .campo-qr { background-color: #edf2f7; font-weight: bold; color: #2d3748; }
+        
+        body { 
+            background: linear-gradient(rgba(11, 43, 107, 0.85), rgba(211, 47, 47, 0.85)), 
+                        url('Captura de pantalla 2026-06-15 083219.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #333; 
+            display: flex; 
+            justify-content: center; 
+            padding: 25px 10px; 
+        }
+
+        .contenedor-movil { 
+            width: 100%; 
+            max-width: 460px; 
+            background: rgba(255, 255, 255, 0.98); 
+            border-radius: 20px; 
+            box-shadow: 0px 10px 30px rgba(0,0,0,0.3); 
+            overflow: hidden; 
+            border: 3px solid #ff9800; 
+        }
+
+        .header { 
+            text-align: center; 
+            padding: 15px; 
+            background-color: #ffffff; 
+            border-bottom: 3px solid #ff9800; 
+        }
+        .logo-simulado { font-weight: 900; font-size: 1.5rem; color: #d32f2f; text-transform: uppercase; letter-spacing: 1px; }
+        .logo-sub { font-size: 0.8rem; color: #555; display: block; font-weight: 600; }
+
+        .banner { 
+            background: linear-gradient(rgba(211, 47, 47, 0.2), rgba(11, 43, 107, 0.4)), 
+                        url('Captura de pantalla 2026-06-15 083338.jpg');
+            background-size: cover;
+            background-position: center;
+            height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+            border-bottom: 3px solid #ff9800;
+        }
+
+        /* Capa oscura interna en el banner para dar legibilidad al texto publicitario */
+        .banner-sombra {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0.1) 100%);
+            z-index: 1;
+        }
+
+        .banner h1 { font-size: 1.4rem; color: #fff; z-index: 2; font-weight: 800; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
+        .banner p { font-size: 0.9rem; color: #ff9800; z-index: 2; font-weight: 700; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+
+        form { padding: 20px; }
+        .grupo-campo { margin-bottom: 16px; }
+        label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 5px; color: #0b2b6b; text-transform: uppercase; }
+        input, select { width: 100%; padding: 11px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; background-color: #f8fafc; font-weight: 500; }
+        input:focus, select:focus { outline: none; border-color: #ff9800; background-color: #ffffff; box-shadow: 0 0 5px rgba(255,152,0,0.3); }
+        
+        .campo-qr { background-color: #fff3e0; font-weight: bold; color: #e65100; border: 2px solid #ffb74d; text-align: center; font-size: 1.05rem; }
         .grupo-mixto { display: flex; gap: 10px; }
         .grupo-mixto select { width: 35%; }
         .grupo-mixto input { width: 65%; }
         
         .input-instagram-container { position: relative; display: flex; align-items: center; }
-        .input-instagram-container span { position: absolute; left: 14px; color: #a0aec0; font-weight: 600; font-size: 1rem; }
-        .input-instagram-container input { padding-left: 30px; }
+        .input-instagram-container span { position: absolute; left: 14px; color: #e1306c; font-weight: 700; font-size: 1rem; }
+        .input-instagram-container input { padding-left: 32px; }
 
-        .boton-enviar { width: 100%; background: #d32f2f; color: white; border: none; padding: 15px; font-size: 1.1rem; font-weight: 700; border-radius: 8px; cursor: pointer; margin-top: 10px; }
-        .boton-enviar:disabled { background: #cbd5e1; cursor: not-allowed; }
-        .footer { text-align: center; padding: 20px; font-size: 0.75rem; color: #94a3b8; background-color: #f8fafc; border-top: 1px solid #e2e8f0; }
-        .texto-ayuda { font-size: 0.75rem; color: #64748b; margin-top: 4px; display: block; }
+        .boton-enviar { width: 100%; background: linear-gradient(135deg, #d32f2f, #b71c1c); color: white; border: none; padding: 14px; font-size: 1.1rem; font-weight: 800; border-radius: 8px; cursor: pointer; margin-top: 5px; box-shadow: 0 4px 10px rgba(211,47,47,0.3); text-transform: uppercase; transition: transform 0.1s; }
+        .boton-enviar:active { transform: scale(0.98); }
+        .boton-enviar:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; }
         
-        .alerta { padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; font-size: 0.9rem; font-weight: 600; }
+        .footer { text-align: center; padding: 15px; font-size: 0.8rem; font-weight: 700; color: #ffffff; background-color: #0b2b6b; border-top: 2px solid #ff9800; }
+        .texto-ayuda { font-size: 0.75rem; color: #64748b; margin-top: 3px; display: block; font-weight: 500; }
+        
+        .alerta { padding: 12px; border-radius: 8px; margin-bottom: 15px; display: none; font-size: 0.9rem; font-weight: 600; }
         .alerta-error { background-color: #fff5f5; color: #c53030; border: 1px solid #feb2b2; }
 
-        /* --- ESTILOS DEL NUEVO POP-UP DE ÉXITO --- */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
-        .modal-content { background: white; padding: 30px 20px; border-radius: 20px; text-align: center; max-width: 420px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 3px solid #ff9800; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        /* --- POP-UP EMERGENTE DE ÉXITO --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 21, 60, 0.85); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
+        .modal-content { background: white; padding: 25px 20px; border-radius: 20px; text-align: center; max-width: 410px; width: 100%; box-shadow: 0 15px 35px rgba(0,0,0,0.5); border: 4px solid #ff9800; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         
-        .modal-content h2 { color: #d32f2f; font-size: 1.8rem; margin-bottom: 5px; text-transform: uppercase; }
-        .modal-content p.sub { color: #ff9800; font-weight: bold; font-size: 1rem; margin-bottom: 20px; }
+        .modal-content h2 { color: #d32f2f; font-size: 1.9rem; margin-bottom: 2px; text-transform: uppercase; font-weight: 900; }
+        .modal-content p.sub { color: #ff9800; font-weight: 800; font-size: 1.1rem; margin-bottom: 15px; text-transform: uppercase; }
         
-        .resumen-datos { text-align: left; background: #f8fafc; border: 1px dashed #cbd5e1; padding: 15px; border-radius: 10px; margin-bottom: 25px; font-size: 0.95rem; color: #334155; line-height: 1.6; }
-        .resumen-datos strong { color: #1e293b; }
+        .resumen-datos { text-align: left; background: #fffdf9; border: 2px dashed #ff9800; padding: 12px 15px; border-radius: 12px; margin-bottom: 15px; font-size: 0.95rem; color: #334155; line-height: 1.5; }
+        .resumen-datos strong { color: #0b2b6b; }
         
-        .btn-modal-wa { width: 100%; background: #25D366; color: white; border: none; padding: 14px; font-size: 1.05rem; font-weight: 700; border-radius: 8px; cursor: pointer; text-decoration: none; display: block; margin-top: 10px; box-shadow: 0 4px 6px rgba(37, 211, 102, 0.2); }
-        .texto-espera { font-size: 0.8rem; color: #64748b; margin-top: 12px; display: block; }
+        .btn-modal-wa { width: 100%; background: #25D366; color: white; border: none; padding: 14px; font-size: 1.1rem; font-weight: 800; border-radius: 8px; cursor: pointer; text-decoration: none; display: block; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3); text-transform: uppercase; }
+        .texto-espera { font-size: 0.8rem; color: #64748b; margin-top: 10px; display: block; font-weight: 600; }
     </style>
 </head>
 <body>
 
     <div class="contenedor-movil">
         <div class="header">
-            <div class="logo-simulado">Pollo Premium</div>
+            <div class="logo-simulado">Súper Pollo</div>
             <span class="logo-sub">Industrias Pollo Premium 5.8, C.A.</span>
         </div>
 
         <div class="banner">
-            <h1>¡Gana 1 de los 10 Pollos Semanales! 🍗</h1>
-            <p>Registra tus datos y participa en el gran sorteo.</p>
+            <div class="banner-sombra"></div>
+            <h1>¡Golea con Súper Pollo! 🍗⚽</h1>
+            <p>Registra tus datos y gana premios semanales</p>
         </div>
 
-        <div style="padding: 20px 20px 0 20px;">
+        <div style="padding: 15px 20px 0 20px;">
             <div id="alerta-error" class="alerta alerta-error"></div>
         </div>
 
         <form id="formulario-promo">
             <div class="grupo-campo">
-                <label for="codigo">Código QR</label>
+                <label for="codigo">Código de Ticket QR</label>
                 <input type="text" id="codigo" class="campo-qr" value="" readonly required>
             </div>
 
             <div class="grupo-campo">
                 <label for="nombre">Nombre y Apellido / Razón Social</label>
-                <input type="text" id="nombre" placeholder="Ej: John Doe o Inversiones 58 C.A." required>
+                <input type="text" id="nombre" placeholder="Ej: Juan Pérez o Inversiones 58 C.A." required>
             </div>
 
             <div class="grupo-campo">
-                <label for="documento_numero">Cedula o RIF</label>
+                <label for="documento_numero">Cédula o RIF</label>
                 <div class="grupo-mixto">
                     <select id="documento_tipo" required>
                         <option value="V" selected>V</option>
@@ -115,14 +171,14 @@
                 <label for="instagram">Tu Usuario de Instagram</label>
                 <div class="input-instagram-container">
                     <span>@</span>
-                    <input type="text" id="instagram" placeholder="juanperez_58" autocomplete="off" required>
+                    <input type="text" id="instagram" placeholder="usuario_ig" autocomplete="off" required>
                 </div>
-                <span class="texto-ayuda">Introduce solo tu nombre de usuario (sin espacios ni el signo @).</span>
+                <span class="texto-ayuda">Introduce solo tu nombre de usuario (sin el signo @).</span>
             </div>
 
             <div class="grupo-campo">
                 <label for="correo">Correo Electrónico</label>
-                <input type="email" id="correo" placeholder="Ej: johnDoe@email.com" required>
+                <input type="email" id="correo" placeholder="Ej: nombre@correo.com" required>
             </div>
 
             <div class="grupo-campo">
@@ -138,11 +194,10 @@
 
             <div class="grupo-campo">
                 <label for="tienda_compra">¿En qué tienda compraste el pollo?</label>
-                <input type="text" id="tienda_compra" placeholder="¿En qué tienda compraste?" required>
-                </select>
+                <input type="text" id="tienda_compra" placeholder="Ej: Distribuidora El Valle, Automercado..." required>
             </div>
 
-            <button type="submit" id="btn-registrar" class="boton-enviar">¡REGISTRARME EN LA PROMO! 🤞</button>
+            <button type="submit" id="btn-registrar" class="boton-enviar">¡REGISTRARME Y PARTICIPAR! 🤞</button>
         </form>
 
         <div class="footer">
@@ -158,8 +213,8 @@
             <div id="resumen-cliente" class="resumen-datos">
                 </div>
 
-            <p style="font-size: 0.9rem; margin-bottom: 15px; color: #475569;">
-                Para validar tu participación de forma definitiva, debes enviar tu comprobante al WhatsApp oficial.
+            <p style="font-size: 0.9rem; margin-bottom: 15px; color: #475569; font-weight: 500;">
+                Para validar tu participación, debes enviar tus datos al WhatsApp oficial de Súper Pollo.
             </p>
             
             <button id="btn-ir-whatsapp" class="btn-modal-wa">
@@ -221,7 +276,7 @@
             
             const boton = document.getElementById('btn-registrar');
             boton.disabled = true;
-            boton.innerText = "Procesando registro...";
+            boton.innerText = "Validando cupón...";
 
             document.getElementById('alerta-error').style.display = 'none';
 
@@ -231,7 +286,7 @@
                 const correo = document.getElementById('correo').value.trim();
                 const ciudad = document.getElementById('ciudad').value;
                 const instagram = instagramInput.value.trim();
-                const tiendaCompra = document.getElementById('tienda_compra').value;
+                const tiendaCompra = document.getElementById('tienda_compra').value.trim();
 
                 const tipoDoc = tipoDocSelect.value;
                 const numeroDocLimpio = numDocInput.value.replace(/[^0-9]/g, ''); 
@@ -303,41 +358,38 @@
 
                 if (updateError) throw new Error("Error crítico al procesar el cupón de la promoción.");
 
-                // Generación de la url de WhatsApp externa
                 const textoMensaje = `¡Hola *Industrias Pollo Premium 5.8*! 👋 Acabo de registrarme con éxito en el sorteo semanal. 🍗\n\n*Mis Datos:*\n• Nombre: ${nombre}\n• Documento: *${cedulaFinal}*\n• Teléfono: *${telefonoFinal}*\n• Instagram: *@${instagram}*\n• Ciudad: *${ciudad}*\n• Tienda de Compra: *${tiendaCompra}*\n• Código QR: *${codigo}*`;
                 const urlWhatsapp = `https://api.whatsapp.com/send?phone=${WHATSAPP_EMPRESA}&text=${encodeURIComponent(textoMensaje)}`;
 
-                // INYECCIÓN DE DATOS EN EL POP-UP
+                // CARGA DE DATOS AL POP-UP
                 document.getElementById('resumen-cliente').innerHTML = `
-                    <strong>👤 Cliente:</strong> ${nombre}<br>
+                    <strong>👤 Nombre:</strong> ${nombre}<br>
                     <strong>🪪 Documento:</strong> ${cedulaFinal}<br>
-                    <strong>📱 Teléfono:</strong> ${telefonoFinal}<br>
+                    <strong>📱 Celular:</strong> ${telefonoFinal}<br>
                     <strong>📸 Instagram:</strong> @${instagram}<br>
-                    <strong>🏪 Tienda:</strong> ${tiendaCompra}<br>
-                    <strong>🎫 Ticket QR:</strong> ${codigo}
+                    <strong>🏪 Establecimiento:</strong> ${tiendaCompra}<br>
+                    <strong>🎫 Ticket Especial:</strong> ${codigo}
                 `;
 
-                // MOSTRAR POP-UP VISUAL
+                // INTERFAZ ACTIVA DEL MODAL
                 const modal = document.getElementById('modal-exito');
                 modal.style.display = 'flex';
                 document.getElementById('formulario-promo').reset(); 
 
-                // Acción al dar click manual en el botón del Pop-up
                 document.getElementById('btn-ir-whatsapp').onclick = () => {
                     window.location.href = urlWhatsapp;
                 };
 
-                // Redirección automática tras 3.5 segundos
                 setTimeout(() => {
                     window.location.href = urlWhatsapp;
-                }, 3500);
+                }, 4000);
 
             } catch (err) {
                 document.getElementById('alerta-error').innerText = err.message;
                 document.getElementById('alerta-error').style.display = 'block';
             } finally {
                 boton.disabled = false;
-                boton.innerText = "¡REGISTRARME EN LA PROMO! 🤞";
+                boton.innerText = "¡REGISTRARME Y PARTICIPAR! 🤞";
             }
         });
     </script>
