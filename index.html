@@ -178,6 +178,12 @@
             </div>
 
             <div class="grupo-campo">
+                <label for="numero_factura">Número de Factura de Compra</label>
+                <input type="text" id="numero_factura" placeholder="Ej: 004921 (Opcional)">
+                <span class="texto-ayuda">Introduce el número correlativo que identifica tu compra.</span>
+            </div>
+
+            <div class="grupo-campo">
                 <label for="nombre">Nombre y Apellido / Razón Social</label>
                 <input type="text" id="nombre" placeholder="Ej: Juan Pérez o Inversiones 58 C.A." required>
             </div>
@@ -264,17 +270,14 @@
 
         const WHATSAPP_EMPRESA = "584143329200"; 
 
-        // LÓGICA DE CIERRE DEL POPUP CORREGIDA
         const modalReglas = document.getElementById('modal-reglas');
         const btnCerrarReglas = document.getElementById('btn-cerrar-reglas');
 
-        // Cerrar con la X
         btnCerrarReglas.addEventListener('click', (e) => {
-            e.stopPropagation(); // Evita interferencias de capas HTML
+            e.stopPropagation(); 
             modalReglas.style.setProperty('display', 'none', 'important');
         });
 
-        // Cerrar también si hacen clic afuera en la zona oscura
         modalReglas.addEventListener('click', (e) => {
             if (e.target === modalReglas) {
                 modalReglas.style.setProperty('display', 'none', 'important');
@@ -331,6 +334,7 @@
 
             try {
                 const codigo = document.getElementById('codigo').value.trim();
+                const factura = document.getElementById('numero_factura').value.trim() || "S/F";
                 const nombre = document.getElementById('nombre').value.trim();
                 const correo = document.getElementById('correo').value.trim();
                 const ciudad = "No especificada"; 
@@ -387,14 +391,15 @@
                         token_qr_usado: codigo,
                         estado_sorteo: 'Pendiente',
                         instagram: instagram,
-                        tienda_compra: tiendaCompra
+                        tienda_compra: tiendaCompra,
+                        numero_factura: factura
                     }]);
 
                 if (insertError) throw new Error("No se pudieron registrar tus datos en la base de datos.");
 
                 try {
                     await emailjs.send("service_7i0v0tc", "template_gd939sf", {
-                        nombre, correo, codigo, cedula: cedulaFinal, telefono: telefonoFinal, ciudad, instagram: `@${instagram}`, tienda: tiendaCompra
+                        nombre, correo, codigo, cedula: cedulaFinal, telefono: telefonoFinal, ciudad, instagram: `@${instagram}`, tienda: tiendaCompra, factura: factura
                     });
                 } catch (errorEmail) {
                     console.error("Error en EmailJS:", errorEmail);
@@ -407,10 +412,11 @@
 
                 if (updateError) throw new Error("Error crítico al procesar el cupón de la promoción.");
 
-                const textoMensaje = `¡Hola *Industrias Pollo Premium 5.8*! 👋 Acabo de registrarme con éxito en el sorteo semanal. 🍗\n\n*Mis Datos:*\n• Nombre: ${nombre}\n• Documento: *${cedulaFinal}*\n• Teléfono: *${telefonoFinal}*\n• Instagram: *@${instagram}*\n• Tienda de Compra: *${tiendaCompra}*\n• Código QR: *${codigo}*`;
+                const textoMensaje = `¡Hola *Industrias Pollo Premium 5.8*! 👋 Acabo de registrarme con éxito en el sorteo semanal. 🍗\n\n*Mis Datos:*\n• Factura Nro: *${factura}*\n• Nombre: ${nombre}\n• Documento: *${cedulaFinal}*\n• Teléfono: *${telefonoFinal}*\n• Instagram: *@${instagram}*\n• Tienda de Compra: *${tiendaCompra}*\n• Código QR: *${codigo}*`;
                 const urlWhatsapp = `https://api.whatsapp.com/send?phone=${WHATSAPP_EMPRESA}&text=${encodeURIComponent(textoMensaje)}`;
 
                 document.getElementById('resumen-cliente').innerHTML = `
+                    <strong>🧾 Factura Nro:</strong> ${factura}<br>
                     <strong>👤 Nombre:</strong> ${nombre}<br>
                     <strong>🪪 Documento:</strong> ${cedulaFinal}<br>
                     <strong>📱 Celular:</strong> ${telefonoFinal}<br>
