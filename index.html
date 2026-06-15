@@ -230,11 +230,6 @@
                 <input type="text" id="tienda_compra" placeholder="Ej: Distribuidora El Valle, Automercado..." required>
             </div>
 
-            <div class="grupo-campo">
-                <label for="numero_factura">Número de Factura de Compra</label>
-                <input type="text" id="numero_factura" placeholder="Ej: FAC-12345 o 000432" required>
-            </div>
-
             <button type="submit" id="btn-registrar" class="boton-enviar">¡REGISTRARME Y PARTICIPAR! 🤞</button>
         </form>
 
@@ -269,8 +264,21 @@
 
         const WHATSAPP_EMPRESA = "584143329200"; 
 
-        document.getElementById('btn-cerrar-reglas').addEventListener('click', () => {
-            document.getElementById('modal-reglas').style.display = 'none';
+        // LÓGICA DE CIERRE DEL POPUP CORREGIDA
+        const modalReglas = document.getElementById('modal-reglas');
+        const btnCerrarReglas = document.getElementById('btn-cerrar-reglas');
+
+        // Cerrar con la X
+        btnCerrarReglas.addEventListener('click', (e) => {
+            e.stopPropagation(); // Evita interferencias de capas HTML
+            modalReglas.style.setProperty('display', 'none', 'important');
+        });
+
+        // Cerrar también si hacen clic afuera en la zona oscura
+        modalReglas.addEventListener('click', (e) => {
+            if (e.target === modalReglas) {
+                modalReglas.style.setProperty('display', 'none', 'important');
+            }
         });
 
         const tipoDocSelect = document.getElementById('documento_tipo');
@@ -328,7 +336,6 @@
                 const ciudad = "No especificada"; 
                 const instagram = instagramInput.value.trim();
                 const tiendaCompra = document.getElementById('tienda_compra').value.trim();
-                const numeroFactura = document.getElementById('numero_factura').value.trim();
 
                 const tipoDoc = tipoDocSelect.value;
                 const numeroDocLimpio = numDocInput.value.replace(/[^0-9]/g, ''); 
@@ -338,7 +345,7 @@
                 const numTelefonoLimpio = document.getElementById('telefono_numero').value.replace(/[^0-9]/g, '');
                 let telefonoFinal = `${operadora}-${numTelefonoLimpio}`;
 
-                if (!nombre || !correo || !numeroDocLimpio || !numTelefonoLimpio || !instagram || !tiendaCompra || !numeroFactura) {
+                if (!nombre || !correo || !numeroDocLimpio || !numTelefonoLimpio || !instagram || !tiendaCompra) {
                     throw new Error("Por favor, rellene todos los campos del formulario de manera correcta.");
                 }
 
@@ -380,15 +387,14 @@
                         token_qr_usado: codigo,
                         estado_sorteo: 'Pendiente',
                         instagram: instagram,
-                        tienda_compra: tiendaCompra,
-                        numero_factura: numeroFactura
+                        tienda_compra: tiendaCompra
                     }]);
 
                 if (insertError) throw new Error("No se pudieron registrar tus datos en la base de datos.");
 
                 try {
                     await emailjs.send("service_7i0v0tc", "template_gd939sf", {
-                        nombre, correo, codigo, cedula: cedulaFinal, telefono: telefonoFinal, ciudad, instagram: `@${instagram}`, tienda: tiendaCompra, factura: numeroFactura
+                        nombre, correo, codigo, cedula: cedulaFinal, telefono: telefonoFinal, ciudad, instagram: `@${instagram}`, tienda: tiendaCompra
                     });
                 } catch (errorEmail) {
                     console.error("Error en EmailJS:", errorEmail);
@@ -401,7 +407,7 @@
 
                 if (updateError) throw new Error("Error crítico al procesar el cupón de la promoción.");
 
-                const textoMensaje = `¡Hola *Industrias Pollo Premium 5.8*! 👋 Acabo de registrarme con éxito en el sorteo semanal. 🍗\n\n*Mis Datos:*\n• Nombre: ${nombre}\n• Documento: *${cedulaFinal}*\n• Teléfono: *${telefonoFinal}*\n• Instagram: *@${instagram}*\n• Tienda de Compra: *${tiendaCompra}*\n• Nro Factura: *${numeroFactura}*\n• Código QR: *${codigo}*`;
+                const textoMensaje = `¡Hola *Industrias Pollo Premium 5.8*! 👋 Acabo de registrarme con éxito en el sorteo semanal. 🍗\n\n*Mis Datos:*\n• Nombre: ${nombre}\n• Documento: *${cedulaFinal}*\n• Teléfono: *${telefonoFinal}*\n• Instagram: *@${instagram}*\n• Tienda de Compra: *${tiendaCompra}*\n• Código QR: *${codigo}*`;
                 const urlWhatsapp = `https://api.whatsapp.com/send?phone=${WHATSAPP_EMPRESA}&text=${encodeURIComponent(textoMensaje)}`;
 
                 document.getElementById('resumen-cliente').innerHTML = `
@@ -409,3 +415,30 @@
                     <strong>🪪 Documento:</strong> ${cedulaFinal}<br>
                     <strong>📱 Celular:</strong> ${telefonoFinal}<br>
                     <strong>📸 Instagram:</strong> @${instagram}<br>
+                    <strong>🏪 Establecimiento:</strong> ${tiendaCompra}<br>
+                    <strong>🎫 Ticket Especial:</strong> ${codigo}
+                `;
+
+                const modal = document.getElementById('modal-exito');
+                modal.style.display = 'flex';
+                document.getElementById('formulario-promo').reset(); 
+
+                document.getElementById('btn-ir-whatsapp').onclick = () => {
+                    window.location.href = urlWhatsapp;
+                };
+
+                setTimeout(() => {
+                    window.location.href = urlWhatsapp;
+                }, 4000);
+
+            } catch (err) {
+                document.getElementById('alerta-error').innerText = err.message;
+                document.getElementById('alerta-error').style.display = 'block';
+            } finally {
+                boton.disabled = false;
+                boton.innerText = "¡REGISTRARME Y PARTICIPAR! 🤞";
+            }
+        });
+    </script>
+</body>
+</html>
