@@ -12,7 +12,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         
         body { 
-            /* CORREGIDO: fondo.jpg como fondo general detrás del formulario */
             background: linear-gradient(rgba(11, 43, 107, 0.85), rgba(211, 47, 47, 0.85)), 
                         url('img/fondo.png'); 
             background-size: cover;
@@ -44,7 +43,6 @@
         .logo-sub { font-size: 0.8rem; color: #555; display: block; font-weight: 600; }
 
         .banner { 
-            /* CORREGIDO: banner.jpg como imagen del encabezado */
             background: linear-gradient(rgba(211, 47, 47, 0.2), rgba(11, 43, 107, 0.4)), 
                         url('img/banner.png');
             background-size: cover;
@@ -60,7 +58,6 @@
             border-bottom: 3px solid #ff9800;
         }
 
-        /* Capa oscura interna en el banner para dar legibilidad al texto publicitario */
         .banner-sombra {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -96,7 +93,6 @@
         .alerta { padding: 12px; border-radius: 8px; margin-bottom: 15px; display: none; font-size: 0.9rem; font-weight: 600; }
         .alerta-error { background-color: #fff5f5; color: #c53030; border: 1px solid #feb2b2; }
 
-        /* --- POP-UP EMERGENTE DE ÉXITO --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 21, 60, 0.85); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
         .modal-content { background: white; padding: 25px 20px; border-radius: 20px; text-align: center; max-width: 410px; width: 100%; box-shadow: 0 15px 35px rgba(0,0,0,0.5); border: 4px solid #ff9800; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -109,9 +105,57 @@
         
         .btn-modal-wa { width: 100%; background: #25D366; color: white; border: none; padding: 14px; font-size: 1.1rem; font-weight: 800; border-radius: 8px; cursor: pointer; text-decoration: none; display: block; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3); text-transform: uppercase; }
         .texto-espera { font-size: 0.8rem; color: #64748b; margin-top: 10px; display: block; font-weight: 600; }
+
+        /* --- NUEVOS ESTILOS PARA EL POPUP DE REGLAS DE ENTRADA --- */
+        .modal-reglas-content { 
+            position: relative; 
+            max-width: 420px; 
+            width: 100%; 
+            background: none; 
+            box-shadow: 0px 20px 40px rgba(0,0,0,0.6);
+            border-radius: 16px;
+            overflow: visible;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .imagen-reglas { 
+            width: 100%; 
+            height: auto; 
+            display: block; 
+            border-radius: 16px; 
+            border: 4px solid #ff9800;
+        }
+        .boton-cerrar-x { 
+            position: absolute; 
+            top: -12px; 
+            right: -12px; 
+            width: 34px; 
+            height: 34px; 
+            background-color: #d32f2f; 
+            color: #ffffff; 
+            border: 3px solid #ffffff; 
+            border-radius: 50%; 
+            font-size: 16px; 
+            font-weight: 900; 
+            cursor: pointer; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
+            z-index: 1010;
+            transition: transform 0.1s;
+        }
+        .boton-cerrar-x:active { transform: scale(0.9); }
     </style>
 </head>
 <body>
+
+    <!-- POP-UP INICIAL DE REGLAS E INSTRUCCIONES -->
+    <div id="modal-reglas" class="modal-overlay" style="display: flex;">
+        <div class="modal-reglas-content">
+            <button id="btn-cerrar-reglas" class="boton-cerrar-x" title="Cerrar ventana">✕</button>
+            <img src="img/Gemini_Generated_Image_prmnzxprmnzxprmn.png" class="imagen-reglas" alt="Reglas Oficiales Súper Pollo">
+        </div>
+    </div>
 
     <div class="contenedor-movil">
         <div class="header">
@@ -232,6 +276,11 @@
         emailjs.init({ publicKey: "MB9bTpr-0mvKHJKI_" });
 
         const WHATSAPP_EMPRESA = "584143329200"; 
+
+        // LÓGICA PARA EL BOTÓN DE CIERRE DEL POPUP DE REGLAS
+        document.getElementById('btn-cerrar-reglas').addEventListener('click', () => {
+            document.getElementById('modal-reglas').style.display = 'none';
+        });
 
         const tipoDocSelect = document.getElementById('documento_tipo');
         const numDocInput = document.getElementById('documento_numero');
