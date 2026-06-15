@@ -12,8 +12,9 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         
         body { 
+            /* CORREGIDO: fondo.jpg como fondo general detrás del formulario */
             background: linear-gradient(rgba(11, 43, 107, 0.85), rgba(211, 47, 47, 0.85)), 
-                        url('img/banner.jpg'); 
+                        url('img/fondo.jpg'); 
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -43,8 +44,9 @@
         .logo-sub { font-size: 0.8rem; color: #555; display: block; font-weight: 600; }
 
         .banner { 
+            /* CORREGIDO: banner.jpg como imagen del encabezado */
             background: linear-gradient(rgba(211, 47, 47, 0.2), rgba(11, 43, 107, 0.4)), 
-                        url('img/fondo.jpg');
+                        url('img/banner.jpg');
             background-size: cover;
             background-position: center;
             height: 180px;
@@ -210,8 +212,7 @@
             <h2>¡Felicidades! 🎉</h2>
             <p class="sub">Ya te encuentras participando</p>
             
-            <div id="resumen-cliente" class="resumen-datos">
-                </div>
+            <div id="resumen-cliente" class="resumen-datos"></div>
 
             <p style="font-size: 0.9rem; margin-bottom: 15px; color: #475569; font-weight: 500;">
                 Para validar tu participación, debes enviar tus datos al WhatsApp oficial de Súper Pollo.
@@ -361,7 +362,6 @@
                 const textoMensaje = `¡Hola *Industrias Pollo Premium 5.8*! 👋 Acabo de registrarme con éxito en el sorteo semanal. 🍗\n\n*Mis Datos:*\n• Nombre: ${nombre}\n• Documento: *${cedulaFinal}*\n• Teléfono: *${telefonoFinal}*\n• Instagram: *@${instagram}*\n• Ciudad: *${ciudad}*\n• Tienda de Compra: *${tiendaCompra}*\n• Código QR: *${codigo}*`;
                 const urlWhatsapp = `https://api.whatsapp.com/send?phone=${WHATSAPP_EMPRESA}&text=${encodeURIComponent(textoMensaje)}`;
 
-                // CARGA DE DATOS AL POP-UP
                 document.getElementById('resumen-cliente').innerHTML = `
                     <strong>👤 Nombre:</strong> ${nombre}<br>
                     <strong>🪪 Documento:</strong> ${cedulaFinal}<br>
@@ -371,7 +371,6 @@
                     <strong>🎫 Ticket Especial:</strong> ${codigo}
                 `;
 
-                // INTERFAZ ACTIVA DEL MODAL
                 const modal = document.getElementById('modal-exito');
                 modal.style.display = 'flex';
                 document.getElementById('formulario-promo').reset(); 
