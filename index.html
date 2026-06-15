@@ -106,7 +106,6 @@
         .btn-modal-wa { width: 100%; background: #25D366; color: white; border: none; padding: 14px; font-size: 1.1rem; font-weight: 800; border-radius: 8px; cursor: pointer; text-decoration: none; display: block; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3); text-transform: uppercase; }
         .texto-espera { font-size: 0.8rem; color: #64748b; margin-top: 10px; display: block; font-weight: 600; }
 
-        /* --- NUEVOS ESTILOS PARA EL POPUP DE REGLAS DE ENTRADA --- */
         .modal-reglas-content { 
             position: relative; 
             max-width: 420px; 
@@ -149,7 +148,6 @@
 </head>
 <body>
 
-    <!-- POP-UP INICIAL DE REGLAS E INSTRUCCIONES -->
     <div id="modal-reglas" class="modal-overlay" style="display: flex;">
         <div class="modal-reglas-content">
             <button id="btn-cerrar-reglas" class="boton-cerrar-x" title="Cerrar ventana">✕</button>
@@ -228,17 +226,6 @@
             </div>
 
             <div class="grupo-campo">
-                <label for="ciudad">Ciudad de Residencia</label>
-                <select id="ciudad" required>
-                    <option value="" disabled selected>Selecciona tu ciudad...</option>
-                    <option value="Caracas">Caracas</option>
-                    <option value="Los Teques">Los Teques</option>
-                    <option value="La Guaira">La Guaira</option>
-                    <option value="Maracay">Maracay</option>
-                </select>
-            </div>
-
-            <div class="grupo-campo">
                 <label for="tienda_compra">¿En qué tienda compraste el pollo?</label>
                 <input type="text" id="tienda_compra" placeholder="Ej: Distribuidora El Valle, Automercado..." required>
             </div>
@@ -277,7 +264,6 @@
 
         const WHATSAPP_EMPRESA = "584143329200"; 
 
-        // LÓGICA PARA EL BOTÓN DE CIERRE DEL POPUP DE REGLAS
         document.getElementById('btn-cerrar-reglas').addEventListener('click', () => {
             document.getElementById('modal-reglas').style.display = 'none';
         });
@@ -334,7 +320,7 @@
                 const codigo = document.getElementById('codigo').value.trim();
                 const nombre = document.getElementById('nombre').value.trim();
                 const correo = document.getElementById('correo').value.trim();
-                const ciudad = document.getElementById('ciudad').value;
+                const ciudad = "No especificada"; // Valor por defecto ya que se eliminó el campo del DOM
                 const instagram = instagramInput.value.trim();
                 const tiendaCompra = document.getElementById('tienda_compra').value.trim();
 
@@ -346,7 +332,7 @@
                 const numTelefonoLimpio = document.getElementById('telefono_numero').value.replace(/[^0-9]/g, '');
                 let telefonoFinal = `${operadora}-${numTelefonoLimpio}`;
 
-                if (!nombre || !correo || !ciudad || !numeroDocLimpio || !numTelefonoLimpio || !instagram || !tiendaCompra) {
+                if (!nombre || !correo || !numeroDocLimpio || !numTelefonoLimpio || !instagram || !tiendaCompra) {
                     throw new Error("Por favor, rellene todos los campos del formulario de manera correcta.");
                 }
 
@@ -408,7 +394,7 @@
 
                 if (updateError) throw new Error("Error crítico al procesar el cupón de la promoción.");
 
-                const textoMensaje = `¡Hola *Industrias Pollo Premium 5.8*! 👋 Acabo de registrarme con éxito en el sorteo semanal. 🍗\n\n*Mis Datos:*\n• Nombre: ${nombre}\n• Documento: *${cedulaFinal}*\n• Teléfono: *${telefonoFinal}*\n• Instagram: *@${instagram}*\n• Ciudad: *${ciudad}*\n• Tienda de Compra: *${tiendaCompra}*\n• Código QR: *${codigo}*`;
+                const textoMensaje = `¡Hola *Industrias Pollo Premium 5.8*! 👋 Acabo de registrarme con éxito en el sorteo semanal. 🍗\n\n*Mis Datos:*\n• Nombre: ${nombre}\n• Documento: *${cedulaFinal}*\n• Teléfono: *${telefonoFinal}*\n• Instagram: *@${instagram}*\n• Tienda de Compra: *${tiendaCompra}*\n• Código QR: *${codigo}*`;
                 const urlWhatsapp = `https://api.whatsapp.com/send?phone=${WHATSAPP_EMPRESA}&text=${encodeURIComponent(textoMensaje)}`;
 
                 document.getElementById('resumen-cliente').innerHTML = `
