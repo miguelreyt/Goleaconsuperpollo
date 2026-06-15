@@ -302,12 +302,12 @@
             }());
         }
 
-        document.getElementById('btn-cerrar-modal').addEventListener('click', () => {
+            document.getElementById('btn-cerrar-modal').addEventListener('click', () => {
             if (ganadorActual && ganadorActual.telefono) {
                 let numeroLimpio = ganadorActual.telefono.replace(/[^0-9]/g, '');
                 
                 if (numeroLimpio.startsWith('0')) {
-                    numeroLimpio = numeroLinter.substring(1);
+                    numeroLimpio = numeroLimpio.substring(1); // <-- Corregido aquí
                 }
                 if (!numeroLimpio.startsWith('58')) {
                     numeroLimpio = '58' + numeroLimpio;
